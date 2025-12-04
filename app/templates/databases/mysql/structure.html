@@ -8,7 +8,7 @@
 <main class="flex-1 flex flex-col min-w-0 bg-slate-50">
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
         <div class="flex items-center gap-4">
-            <a href="/databases/mysql" class="text-slate-400 hover:text-slate-600">
+            <a href="/databases/{{ database.id }}/mysql" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -45,21 +45,24 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
+                        {% for column in columns %}
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
+                                {% if column.Key == 'PRI' %}
                                 <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z">
                                     </path>
                                 </svg>
-                                id
+                                {% endif %}
+                                {{ column.Field }}
                             </td>
-                            <td class="px-6 py-4 font-mono text-xs">bigint(20) unsigned</td>
-                            <td class="px-6 py-4 text-xs">-</td>
-                            <td class="px-6 py-4">NO</td>
-                            <td class="px-6 py-4 font-mono text-xs">NULL</td>
-                            <td class="px-6 py-4 font-mono text-xs">auto_increment</td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ column.Type }}</td>
+                            <td class="px-6 py-4 text-xs">{{ column.Collation or '-' }}</td>
+                            <td class="px-6 py-4">{{ column.Null }}</td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ column.Default or 'NULL' }}</td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ column.Extra or '' }}</td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-3">
                                     <button class="text-slate-400 hover:text-blue-600">Change</button>
@@ -67,48 +70,12 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">username</td>
-                            <td class="px-6 py-4 font-mono text-xs">varchar(255)</td>
-                            <td class="px-6 py-4 text-xs">utf8mb4_unicode_ci</td>
-                            <td class="px-6 py-4">NO</td>
-                            <td class="px-6 py-4 font-mono text-xs">NULL</td>
-                            <td class="px-6 py-4 font-mono text-xs"></td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-3">
-                                    <button class="text-slate-400 hover:text-blue-600">Change</button>
-                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
-                                </div>
-                            </td>
+                        {% endfor %}
+                        {% if not columns %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-500">No columns found</td>
                         </tr>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">email</td>
-                            <td class="px-6 py-4 font-mono text-xs">varchar(255)</td>
-                            <td class="px-6 py-4 text-xs">utf8mb4_unicode_ci</td>
-                            <td class="px-6 py-4">NO</td>
-                            <td class="px-6 py-4 font-mono text-xs">NULL</td>
-                            <td class="px-6 py-4 font-mono text-xs"></td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-3">
-                                    <button class="text-slate-400 hover:text-blue-600">Change</button>
-                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">created_at</td>
-                            <td class="px-6 py-4 font-mono text-xs">timestamp</td>
-                            <td class="px-6 py-4 text-xs">-</td>
-                            <td class="px-6 py-4">YES</td>
-                            <td class="px-6 py-4 font-mono text-xs">CURRENT_TIMESTAMP</td>
-                            <td class="px-6 py-4 font-mono text-xs"></td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-3">
-                                    <button class="text-slate-400 hover:text-blue-600">Change</button>
-                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
-                                </div>
-                            </td>
-                        </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
@@ -131,24 +98,22 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
+                        {% for index in indexes %}
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">PRIMARY</td>
-                            <td class="px-6 py-4">BTREE</td>
-                            <td class="px-6 py-4">Yes</td>
-                            <td class="px-6 py-4 font-mono text-xs">id</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ index.name }}</td>
+                            <td class="px-6 py-4">{{ index.type }}</td>
+                            <td class="px-6 py-4">{{ index.unique }}</td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ index.columns_str }}</td>
                             <td class="px-6 py-4 text-right">
                                 <button class="text-slate-400 hover:text-red-600">Drop</button>
                             </td>
                         </tr>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">users_email_unique</td>
-                            <td class="px-6 py-4">BTREE</td>
-                            <td class="px-6 py-4">Yes</td>
-                            <td class="px-6 py-4 font-mono text-xs">email</td>
-                            <td class="px-6 py-4 text-right">
-                                <button class="text-slate-400 hover:text-red-600">Drop</button>
-                            </td>
+                        {% endfor %}
+                        {% if not indexes %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-slate-500">No indexes found</td>
                         </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>

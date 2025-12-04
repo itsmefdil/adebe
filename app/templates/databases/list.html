@@ -68,7 +68,7 @@
                                     <a href="/databases/{{ db.id }}/elasticsearch"
                                         class="text-primary hover:text-blue-700 font-medium text-xs">Manage ES</a>
                                     {% elif db.type == 'MySQL' %}
-                                    <a href="/databases/mysql"
+                                    <a href="/databases/{{ db.id }}/mysql"
                                         class="text-primary hover:text-blue-700 font-medium text-xs">Manage MySQL</a>
                                     {% elif db.type == 'PostgreSQL' %}
                                     <a href="/databases/postgresql"

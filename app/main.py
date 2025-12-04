@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from .auth import authenticate_user
 from .database import get_db, ConnectionManager
 from .dependencies import templates, get_current_user
-from .api import databases
+from .api import databases, mysql, postgresql, mongodb, sqlite, elasticsearch
 import os
 
 app = FastAPI()
@@ -16,7 +16,13 @@ app.add_middleware(SessionMiddleware, secret_key="secret-key-should-be-env-var")
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
+# Include all database routers
 app.include_router(databases.router)
+app.include_router(mysql.router)
+app.include_router(elasticsearch.router)
+app.include_router(postgresql.router)
+app.include_router(mongodb.router)
+app.include_router(sqlite.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
