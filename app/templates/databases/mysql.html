@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}MySQL Dashboard - Database Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">MySQL Server Status</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <span
+                class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                Running
+            </span>
+            <span class="text-sm text-slate-500">Uptime: 14 days, 2 hours</span>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+        <!-- Server Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Threads Connected</h3>
+                <div class="text-3xl font-bold text-slate-800">42</div>
+                <div class="text-xs text-slate-400 mt-1">Max: 151</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Questions / Sec</h3>
+                <div class="text-3xl font-bold text-slate-800">1,250</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Slow Queries</h3>
+                <div class="text-3xl font-bold text-slate-800">12</div>
+                <div class="text-xs text-red-500 mt-1">+2 last hour</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Buffer Pool Usage</h3>
+                <div class="text-3xl font-bold text-slate-800">78%</div>
+                <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
+                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 78%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">Database Schema</h3>
+                <button
+                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                    Create Table
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Table Name</th>
+                            <th class="px-6 py-4">Engine</th>
+                            <th class="px-6 py-4">Rows</th>
+                            <th class="px-6 py-4">Size</th>
+                            <th class="px-6 py-4">Collation</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">users</td>
+                            <td class="px-6 py-4">InnoDB</td>
+                            <td class="px-6 py-4">15,234</td>
+                            <td class="px-6 py-4">2.5 MB</td>
+                            <td class="px-6 py-4">utf8mb4_unicode_ci</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/mysql/tables/users/browse"
+                                        class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                    <a href="/databases/mysql/tables/users/structure"
+                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">orders</td>
+                            <td class="px-6 py-4">InnoDB</td>
+                            <td class="px-6 py-4">142,890</td>
+                            <td class="px-6 py-4">45.2 MB</td>
+                            <td class="px-6 py-4">utf8mb4_unicode_ci</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/mysql/tables/orders/browse"
+                                        class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                    <a href="/databases/mysql/tables/orders/structure"
+                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">products</td>
+                            <td class="px-6 py-4">InnoDB</td>
+                            <td class="px-6 py-4">5,600</td>
+                            <td class="px-6 py-4">1.2 MB</td>
+                            <td class="px-6 py-4">utf8mb4_unicode_ci</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/mysql/tables/products/browse"
+                                        class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                    <a href="/databases/mysql/tables/products/structure"
+                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">logs</td>
+                            <td class="px-6 py-4">MyISAM</td>
+                            <td class="px-6 py-4">2,500,120</td>
+                            <td class="px-6 py-4">350 MB</td>
+                            <td class="px-6 py-4">utf8_general_ci</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/mysql/tables/logs/browse"
+                                        class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                    <a href="/databases/mysql/tables/logs/structure"
+                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Process List -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800">Process List</h3>
+                    <button class="text-primary hover:text-blue-700 text-sm font-medium">Refresh</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">ID</th>
+                                <th class="px-6 py-4">User</th>
+                                <th class="px-6 py-4">Command</th>
+                                <th class="px-6 py-4">Time</th>
+                                <th class="px-6 py-4">State</th>
+                                <th class="px-6 py-4">Info</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs">2341</td>
+                                <td class="px-6 py-4">app_user</td>
+                                <td class="px-6 py-4">Query</td>
+                                <td class="px-6 py-4">0.02</td>
+                                <td class="px-6 py-4">executing</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">SELECT * FROM orders WHERE
+                                    status = 'pending'</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs">2345</td>
+                                <td class="px-6 py-4">analytics</td>
+                                <td class="px-6 py-4">Sleep</td>
+                                <td class="px-6 py-4">15</td>
+                                <td class="px-6 py-4"></td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">NULL</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-mono text-xs">2350</td>
+                                <td class="px-6 py-4">root</td>
+                                <td class="px-6 py-4">Query</td>
+                                <td class="px-6 py-4">0.00</td>
+                                <td class="px-6 py-4">starting</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">SHOW PROCESSLIST</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Server Variables -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-800">Server Variables</h3>
+                </div>
+                <div class="p-0">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <tbody class="divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">version</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">8.0.34</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">datadir</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">/var/lib/mysql/</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">max_connections</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">151</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">innodb_buffer_pool_size</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">134217728</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">slow_query_log</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right text-green-600">ON</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slow Query Log -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200">
+                <h3 class="font-bold text-slate-800">Recent Slow Queries</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Time</th>
+                            <th class="px-6 py-4">User@Host</th>
+                            <th class="px-6 py-4">Query Time</th>
+                            <th class="px-6 py-4">Rows Examined</th>
+                            <th class="px-6 py-4">SQL Statement</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-xs">2023-10-27 14:30:05</td>
+                            <td class="px-6 py-4">analytics@192.168.1.5</td>
+                            <td class="px-6 py-4 text-red-600 font-bold">5.2s</td>
+                            <td class="px-6 py-4">1,500,000</td>
+                            <td class="px-6 py-4 font-mono text-xs truncate max-w-lg">SELECT * FROM logs WHERE
+                                created_at < '2023-01-01' ORDER BY id DESC</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-xs">2023-10-27 14:15:22</td>
+                            <td class="px-6 py-4">app_user@192.168.1.2</td>
+                            <td class="px-6 py-4 text-orange-600 font-bold">2.1s</td>
+                            <td class="px-6 py-4">500,000</td>
+                            <td class="px-6 py-4 font-mono text-xs truncate max-w-lg">SELECT count(*) FROM users JOIN
+                                orders ON users.id = orders.user_id</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}PostgreSQL Dashboard - Database Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">PostgreSQL Overview</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <span
+                class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                Active
+            </span>
+            <span class="text-sm text-slate-500">Version: 15.4</span>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Active Connections</h3>
+                <div class="text-3xl font-bold text-slate-800">85</div>
+                <div class="text-xs text-slate-400 mt-1">Max: 100</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Transactions / Sec</h3>
+                <div class="text-3xl font-bold text-slate-800">450</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Cache Hit Ratio</h3>
+                <div class="text-3xl font-bold text-slate-800">99.2%</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Database Size</h3>
+                <div class="text-3xl font-bold text-slate-800">12.4 GB</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Relations (Tables) -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800">Relations</h3>
+                    <div class="flex gap-2">
+                        <button class="text-sm text-slate-500 hover:text-slate-800 font-medium">Tables</button>
+                        <button class="text-sm text-slate-400 hover:text-slate-800 font-medium">Views</button>
+                        <button class="text-sm text-slate-400 hover:text-slate-800 font-medium">Materialized
+                            Views</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">Schema</th>
+                                <th class="px-6 py-4">Name</th>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4">Owner</th>
+                                <th class="px-6 py-4">Size</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">public</td>
+                                <td class="px-6 py-4 font-medium text-slate-900">users</td>
+                                <td class="px-6 py-4">table</td>
+                                <td class="px-6 py-4">postgres</td>
+                                <td class="px-6 py-4">2.5 MB</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">public</td>
+                                <td class="px-6 py-4 font-medium text-slate-900">orders</td>
+                                <td class="px-6 py-4">table</td>
+                                <td class="px-6 py-4">postgres</td>
+                                <td class="px-6 py-4">45 MB</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4">analytics</td>
+                                <td class="px-6 py-4 font-medium text-slate-900">daily_stats</td>
+                                <td class="px-6 py-4">view</td>
+                                <td class="px-6 py-4">postgres</td>
+                                <td class="px-6 py-4">-</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Active Queries -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-800">Active Queries</h3>
+                </div>
+                <div class="p-0">
+                    <ul class="divide-y divide-slate-200">
+                        <li class="p-4 hover:bg-slate-50">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-xs font-mono text-slate-500">PID: 1245</span>
+                                <span class="text-xs font-bold text-green-600">active</span>
+                            </div>
+                            <p class="text-xs font-mono text-slate-700 truncate">SELECT * FROM users WHERE last_login >
+                                NOW() - INTERVAL '1 day'</p>
+                            <div class="mt-2 text-xs text-slate-400">0.05s</div>
+                        </li>
+                        <li class="p-4 hover:bg-slate-50">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-xs font-mono text-slate-500">PID: 1290</span>
+                                <span class="text-xs font-bold text-blue-600">idle</span>
+                            </div>
+                            <p class="text-xs font-mono text-slate-700 truncate">COMMIT</p>
+                            <div class="mt-2 text-xs text-slate-400">12s</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

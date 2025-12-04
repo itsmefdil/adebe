@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}SQLite Dashboard - Database Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">SQLite Database</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-slate-500 font-mono">/var/lib/data/app.db</span>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+        <!-- File Info -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h3 class="font-bold text-slate-800 mb-4">File Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="text-sm text-slate-500 mb-1">File Size</div>
+                    <div class="text-2xl font-bold text-slate-800">4.2 MB</div>
+                </div>
+                <div>
+                    <div class="text-sm text-slate-500 mb-1">Permissions</div>
+                    <div class="text-2xl font-bold text-slate-800 font-mono">-rw-r--r--</div>
+                </div>
+                <div>
+                    <div class="text-sm text-slate-500 mb-1">Last Modified</div>
+                    <div class="text-2xl font-bold text-slate-800">Oct 27, 14:30</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Schema -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800">Schema Objects</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                            <tr>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4">Name</th>
+                                <th class="px-6 py-4">SQL</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200">
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4"><span
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">table</span></td>
+                                <td class="px-6 py-4 font-medium text-slate-900">users</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE TABLE users (id INTEGER
+                                    PRIMARY KEY...)</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4"><span
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">table</span></td>
+                                <td class="px-6 py-4 font-medium text-slate-900">settings</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE TABLE settings (key
+                                    TEXT, value TEXT...)</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4"><span
+                                        class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">index</span>
+                                </td>
+                                <td class="px-6 py-4 font-medium text-slate-900">idx_users_email</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE INDEX idx_users_email
+                                    ON users(email)</td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pragma Settings -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-800">Pragma Settings</h3>
+                </div>
+                <div class="p-0">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <tbody class="divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">journal_mode</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">wal</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">synchronous</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">NORMAL</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">encoding</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">UTF-8</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">foreign_keys</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right text-green-600">ON</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,8 @@
+users:
+  - username: admin
+    password: password123 # In a real app, this should be hashed. For this demo, we'll keep it simple as per context.
+    role: admin
+  - username: user
+    password: user # In a real app, this should be hashed. For this demo, we'll keep it simple as per context.
+    role: admin
+    

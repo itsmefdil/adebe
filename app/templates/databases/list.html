@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Databases - Database Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <h2 class="text-2xl font-bold text-slate-800">Database Connections</h2>
+        <a href="/databases/new"
+            class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Connection
+        </a>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Name</th>
+                            <th class="px-6 py-4">Type</th>
+                            <th class="px-6 py-4">Host</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for db in databases %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ db.name }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium">{{
+                                    db.type }}</span>
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ db.host }}:{{ db.port }}</td>
+                            <td class="px-6 py-4">
+                                <span class="flex items-center gap-2">
+                                    <span
+                                        class="w-2 h-2 rounded-full {% if db.status == 'Connected' %}bg-green-500{% else %}bg-red-500{% endif %}"></span>
+                                    {{ db.status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <button class="text-slate-400 hover:text-primary" title="Test Connection">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                    </button>
+                                    <a href="/databases/{{ loop.index }}/edit"
+                                        class="text-slate-400 hover:text-blue-600" title="Edit">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
+                                        </svg>
+                                    </a>
+                                    {% if db.type == 'Elasticsearch' %}
+                                    <a href="/databases/elasticsearch"
+                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage ES</a>
+                                    {% elif db.type == 'MySQL' %}
+                                    <a href="/databases/mysql"
+                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage MySQL</a>
+                                    {% elif db.type == 'PostgreSQL' %}
+                                    <a href="/databases/postgresql"
+                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage PG</a>
+                                    {% elif db.type == 'SQLite' %}
+                                    <a href="/databases/sqlite"
+                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage SQLite</a>
+                                    {% elif db.type == 'MongoDB' %}
+                                    <a href="/databases/mongodb"
+                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage Mongo</a>
+                                    {% endif %}
+                                    <button class="text-slate-400 hover:text-red-600" title="Delete">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 2 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if not databases %}
+            <div class="p-8 text-center text-slate-500">
+                <p>No database connections found.</p>
+                <a href="/databases/new" class="text-primary hover:underline mt-2 inline-block">Add your first
+                    connection</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</main>
+{% endblock %}
