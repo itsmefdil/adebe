@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Create Table - MySQL Dashboard{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/{{ database.id }}/mysql" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Create New Table</h2>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <form method="POST" class="p-8 space-y-6" id="createTableForm">
+                {% if error %}
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p class="text-sm text-red-800">Error: {{ error }}</p>
+                </div>
+                {% endif %}
+
+                <div>
+                    <label for="table_name" class="block text-sm font-medium text-slate-700 mb-1">Table Name</label>
+                    <input type="text" id="table_name" name="table_name" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                </div>
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-medium text-slate-800">Columns</h3>
+                        <button type="button" onclick="addColumn()"
+                            class="px-3 py-1.5 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                            + Add Column
+                        </button>
+                    </div>
+
+                    <div class="space-y-3" id="columnsContainer">
+                        <!-- Columns will be added here -->
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-4 pt-4 border-t border-slate-100">
+                    <a href="/databases/{{ database.id }}/mysql"
+                        class="px-4 py-2 text-slate-700 font-medium hover:bg-slate-50 rounded-lg transition-colors">
+                        Cancel
+                    </a>
+                    <button type="submit"
+                        class="px-6 py-2 bg-primary hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors shadow-sm">
+                        Create Table
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<template id="columnTemplate">
+    <div class="flex gap-3 items-start p-4 bg-slate-50 rounded-lg border border-slate-200 relative group">
+        <div class="flex-1 grid grid-cols-12 gap-3">
+            <div class="col-span-3">
+                <label class="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                <input type="text" name="columns[][name]" required placeholder="id"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-primary focus:border-primary">
+            </div>
+            <div class="col-span-3">
+                <label class="block text-xs font-medium text-slate-500 mb-1">Type</label>
+                <select name="columns[][type]"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-primary focus:border-primary">
+                    <option value="INT">INT</option>
+                    <option value="VARCHAR">VARCHAR</option>
+                    <option value="TEXT">TEXT</option>
+                    <option value="DATE">DATE</option>
+                    <option value="DATETIME">DATETIME</option>
+                    <option value="BOOLEAN">BOOLEAN</option>
+                    <option value="FLOAT">FLOAT</option>
+                    <option value="DECIMAL">DECIMAL</option>
+                </select>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-xs font-medium text-slate-500 mb-1">Length</label>
+                <input type="number" name="columns[][length]" placeholder="255"
+                    class="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-1 focus:ring-primary focus:border-primary">
+            </div>
+            <div class="col-span-4 flex items-center gap-4 pt-6">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="columns[][primary_key]" value="1"
+                        class="rounded border-slate-300 text-primary focus:ring-primary">
+                    <span class="ml-2 text-xs text-slate-600">PK</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="columns[][auto_increment]" value="1"
+                        class="rounded border-slate-300 text-primary focus:ring-primary">
+                    <span class="ml-2 text-xs text-slate-600">AI</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="columns[][nullable]" value="1"
+                        class="rounded border-slate-300 text-primary focus:ring-primary" checked>
+                    <span class="ml-2 text-xs text-slate-600">Null</span>
+                </label>
+            </div>
+        </div>
+        <button type="button" onclick="this.closest('.group').remove()" class="text-slate-400 hover:text-red-500 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </div>
+</template>
+
+<script>
+    function addColumn() {
+        const template = document.getElementById('columnTemplate');
+        const container = document.getElementById('columnsContainer');
+        const clone = template.content.cloneNode(true);
+
+        // Update name attributes to be unique/indexed if needed, but for now simple [] works with some backend parsing logic
+        // Actually, for FastAPI Form parsing of lists of objects, we might need to be clever.
+        // Let's use a simple index counter to make parsing easier if we were using JS to submit.
+        // But since we are using standard form submission, we'll need to handle the list parsing in Python carefully
+        // or use JS to convert to JSON before submit.
+
+        // Let's use JS to intercept submit and send JSON. It's cleaner for complex nested data.
+
+        container.appendChild(clone);
+    }
+
+    // Add initial column
+    addColumn();
+
+    document.getElementById('createTableForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const columns = [];
+        const rows = document.querySelectorAll('#columnsContainer > div');
+
+        rows.forEach(row => {
+            columns.push({
+                name: row.querySelector('[name="columns[][name]"]').value,
+                type: row.querySelector('[name="columns[][type]"]').value,
+                length: row.querySelector('[name="columns[][length]"]').value,
+                primary_key: row.querySelector('[name="columns[][primary_key]"]').checked,
+                auto_increment: row.querySelector('[name="columns[][auto_increment]"]').checked,
+                nullable: row.querySelector('[name="columns[][nullable]"]').checked
+            });
+        });
+
+        const data = {
+            table_name: formData.get('table_name'),
+            columns: columns
+        };
+
+        try {
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                window.location.href = `/databases/{{ database.id }}/mysql`;
+            } else {
+                const result = await response.json();
+                alert('Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}

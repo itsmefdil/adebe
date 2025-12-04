@@ -5,6 +5,7 @@ description = "Database Management Dashboard"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "cryptography>=46.0.3",
     "elasticsearch>=9.2.0",
     "fastapi>=0.123.5",
     "itsdangerous>=2.2.0",
@@ -12,6 +13,7 @@ dependencies = [
     "mysql-connector-python>=9.5.0",
     "psycopg2-binary>=2.9.11",
     "pymongo>=4.15.5",
+    "python-dotenv>=1.2.1",
     "python-multipart>=0.0.20",
     "pyyaml>=6.0.3",
     "requests>=2.32.5",

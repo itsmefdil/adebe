@@ -1,0 +1,16 @@
+{% if processlist %}
+{% for proc in processlist[:10] %}
+<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-6 py-4 font-mono text-xs">{{ proc.Id }}</td>
+    <td class="px-6 py-4">{{ proc.User }}</td>
+    <td class="px-6 py-4">{{ proc.Command }}</td>
+    <td class="px-6 py-4">{{ proc.Time }}</td>
+    <td class="px-6 py-4">{{ proc.State or '' }}</td>
+    <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">{{ proc.Info or 'NULL' }}</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr>
+    <td colspan="6" class="px-6 py-8 text-center text-slate-500">No active processes</td>
+</tr>
+{% endif %}

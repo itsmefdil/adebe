@@ -9,11 +9,14 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
         <h2 class="text-2xl font-bold text-slate-800">Data Visualization</h2>
         <div class="flex items-center gap-3">
-            <button
-                class="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                Last 24 Hours
-            </button>
-            <button
+            <select id="databaseSelect" onchange="loadStats()"
+                class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                <option value="" disabled selected>Select Database</option>
+                {% for db in databases %}
+                <option value="{{ db.id }}" data-type="{{ db.type }}">{{ db.name }} ({{ db.type }})</option>
+                {% endfor %}
+            </select>
+            <button onclick="loadStats()"
                 class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
                 Refresh Data
             </button>
@@ -22,42 +25,113 @@
 
     <div class="flex-1 overflow-y-auto p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Chart 1 -->
+            <!-- Chart 1: Row Counts -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4">Query Performance</h3>
-                <div class="h-64 bg-slate-50 rounded-lg flex items-end justify-between p-4 gap-2">
-                    <div class="w-full bg-blue-200 rounded-t h-[40%]"></div>
-                    <div class="w-full bg-blue-300 rounded-t h-[60%]"></div>
-                    <div class="w-full bg-blue-400 rounded-t h-[30%]"></div>
-                    <div class="w-full bg-blue-500 rounded-t h-[80%]"></div>
-                    <div class="w-full bg-blue-600 rounded-t h-[50%]"></div>
-                    <div class="w-full bg-blue-500 rounded-t h-[70%]"></div>
-                    <div class="w-full bg-blue-400 rounded-t h-[45%]"></div>
+                <h3 class="font-bold text-slate-800 mb-4">Table Row Counts</h3>
+                <div class="h-64 relative">
+                    <canvas id="rowsChart"></canvas>
                 </div>
             </div>
 
-            <!-- Chart 2 -->
+            <!-- Chart 2: Table Sizes -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4">Storage Usage</h3>
-                <div class="h-64 flex items-center justify-center">
-                    <div
-                        class="w-48 h-48 rounded-full border-8 border-slate-100 border-t-primary border-r-primary transform rotate-45">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Chart 3 -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 col-span-1 md:col-span-2">
-                <h3 class="font-bold text-slate-800 mb-4">Traffic Overview</h3>
-                <div class="h-64 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400">
-                    <svg class="w-full h-full p-4" viewBox="0 0 100 20" preserveAspectRatio="none">
-                        <path d="M0 10 Q 25 20 50 10 T 100 10" stroke="currentColor" stroke-width="0.5" fill="none" />
-                        <path d="M0 15 Q 25 5 50 15 T 100 15" stroke="currentColor" stroke-width="0.5" fill="none"
-                            class="text-blue-400" />
-                    </svg>
+                <h3 class="font-bold text-slate-800 mb-4">Table Sizes (MB)</h3>
+                <div class="h-64 relative">
+                    <canvas id="sizeChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let rowsChartInstance = null;
+    let sizeChartInstance = null;
+
+    async function loadStats() {
+        const dbSelect = document.getElementById('databaseSelect');
+        const dbId = dbSelect.value;
+        const dbType = dbSelect.options[dbSelect.selectedIndex]?.dataset.type;
+
+        if (!dbId) return;
+
+        if (dbType !== 'MySQL') {
+            alert('Only MySQL is supported for visualization currently');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/databases/${dbId}/mysql/stats`);
+            const data = await response.json();
+
+            if (data.tables) {
+                updateCharts(data.tables);
+            }
+        } catch (error) {
+            console.error('Error loading stats:', error);
+            alert('Failed to load stats');
+        }
+    }
+
+    function updateCharts(tables) {
+        const labels = tables.map(t => t.Name);
+        const rows = tables.map(t => t.Rows || 0);
+        const sizes = tables.map(t => ((t.Data_length || 0) / 1024 / 1024).toFixed(2));
+
+        // Rows Chart
+        const rowsCtx = document.getElementById('rowsChart').getContext('2d');
+        if (rowsChartInstance) rowsChartInstance.destroy();
+
+        rowsChartInstance = new Chart(rowsCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rows',
+                    data: rows,
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Size Chart
+        const sizeCtx = document.getElementById('sizeChart').getContext('2d');
+        if (sizeChartInstance) sizeChartInstance.destroy();
+
+        sizeChartInstance = new Chart(sizeCtx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Size (MB)',
+                    data: sizes,
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.5)',
+                        'rgba(245, 158, 11, 0.5)',
+                        'rgba(16, 185, 129, 0.5)',
+                        'rgba(59, 130, 246, 0.5)',
+                        'rgba(99, 102, 241, 0.5)',
+                        'rgba(139, 92, 246, 0.5)',
+                        'rgba(236, 72, 153, 0.5)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+</script>
 {% endblock %}

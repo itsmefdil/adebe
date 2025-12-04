@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from .models import DatabaseConnection, SessionLocal, init_db
+from app.utils.security import encrypt_password
 
 # Initialize the database on module import (for simplicity in this demo)
 init_db()
@@ -22,6 +23,9 @@ class ConnectionManager:
         return self.db.query(DatabaseConnection).filter(DatabaseConnection.id == connection_id).first()
 
     def create_connection(self, connection_data: dict):
+        if "password" in connection_data and connection_data["password"]:
+            connection_data["password"] = encrypt_password(connection_data["password"])
+        
         db_connection = DatabaseConnection(**connection_data)
         self.db.add(db_connection)
         self.db.commit()
@@ -31,6 +35,9 @@ class ConnectionManager:
     def update_connection(self, connection_id: int, connection_data: dict):
         db_connection = self.get_connection(connection_id)
         if db_connection:
+            if "password" in connection_data and connection_data["password"]:
+                connection_data["password"] = encrypt_password(connection_data["password"])
+            
             for key, value in connection_data.items():
                 setattr(db_connection, key, value)
             self.db.commit()

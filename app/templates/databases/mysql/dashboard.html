@@ -48,10 +48,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <h3 class="font-bold text-slate-800">Database Schema</h3>
-                <button
+                <a href="/databases/{{ database.id }}/mysql/create-table"
                     class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
                     Create Table
-                </button>
+                </a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
@@ -79,6 +79,14 @@
                                         class="text-primary hover:text-blue-700 font-medium">Browse</a>
                                     <a href="/databases/{{ database.id }}/mysql/tables/{{ table.Name }}/structure"
                                         class="text-slate-400 hover:text-slate-600">Structure</a>
+                                    <button onclick="dropTable('{{ table.Name }}')"
+                                        class="text-red-400 hover:text-red-600" title="Drop Table">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -177,4 +185,28 @@
 
     </div>
 </main>
+
+<script>
+    async function dropTable(tableName) {
+        if (!confirm(`Are you sure you want to drop table "${tableName}"? This action cannot be undone and will delete all data in the table.`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/databases/{{ database.id }}/mysql/tables/${tableName}`, {
+                method: 'DELETE',
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                window.location.reload();
+            } else {
+                alert('Error dropping table: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error dropping table: ' + error.message);
+        }
+    }
+</script>
 {% endblock %}

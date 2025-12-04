@@ -9,12 +9,14 @@
     <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
         <h2 class="text-2xl font-bold text-slate-800">Query Builder</h2>
         <div class="flex items-center gap-3">
-            <select
+            <select id="databaseSelect"
                 class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                <option>Production DB</option>
-                <option>Analytics DB</option>
+                <option value="" disabled selected>Select Database</option>
+                {% for db in databases %}
+                <option value="{{ db.id }}" data-type="{{ db.type }}">{{ db.name }} ({{ db.type }})</option>
+                {% endfor %}
             </select>
-            <button
+            <button onclick="runQuery()"
                 class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -34,10 +36,10 @@
             <div
                 class="px-4 py-2 border-b border-slate-200 bg-slate-50 flex items-center gap-4 text-xs font-medium text-slate-500">
                 <button class="hover:text-slate-800">Format SQL</button>
-                <button class="hover:text-slate-800">Clear</button>
-                <button class="hover:text-slate-800">Save Query</button>
+                <button class="hover:text-slate-800"
+                    onclick="document.getElementById('queryInput').value = ''">Clear</button>
             </div>
-            <textarea class="flex-1 p-4 font-mono text-sm outline-none resize-none" placeholder="-- Write your SQL query here...
+            <textarea id="queryInput" class="flex-1 p-4 font-mono text-sm outline-none resize-none" placeholder="-- Write your SQL query here...
 SELECT * FROM users WHERE active = true;"></textarea>
         </div>
 
@@ -45,20 +47,104 @@ SELECT * FROM users WHERE active = true;"></textarea>
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <h3 class="font-bold text-slate-800">Results</h3>
-                <span class="text-xs text-slate-500">0 rows in 0.00ms</span>
+                <span id="queryStats" class="text-xs text-slate-500"></span>
             </div>
-            <div class="flex-1 flex items-center justify-center text-slate-400">
-                <div class="text-center">
-                    <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
-                        </path>
-                    </svg>
-                    <p>Execute a query to see results</p>
+            <div id="resultsContainer" class="flex-1 overflow-auto">
+                <div class="flex items-center justify-center h-full text-slate-400">
+                    <div class="text-center">
+                        <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                            </path>
+                        </svg>
+                        <p>Execute a query to see results</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </main>
+
+<script>
+    async function runQuery() {
+        const dbSelect = document.getElementById('databaseSelect');
+        const queryInput = document.getElementById('queryInput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const queryStats = document.getElementById('queryStats');
+
+        const dbId = dbSelect.value;
+        const dbType = dbSelect.options[dbSelect.selectedIndex]?.dataset.type;
+        const query = queryInput.value.trim();
+
+        if (!dbId) {
+            alert('Please select a database');
+            return;
+        }
+
+        if (dbType !== 'MySQL') {
+            alert('Only MySQL is supported for now');
+            return;
+        }
+
+        if (!query) {
+            alert('Please enter a query');
+            return;
+        }
+
+        // Show loading
+        resultsContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">Running query...</div>';
+        queryStats.textContent = 'Executing...';
+
+        const startTime = performance.now();
+
+        try {
+            const response = await fetch(`/databases/${dbId}/mysql/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+            });
+
+            const data = await response.json();
+            const endTime = performance.now();
+            const duration = (endTime - startTime).toFixed(2);
+
+            if (response.ok && data.success) {
+                if (data.rows && data.rows.length > 0) {
+                    const columns = data.columns;
+                    const rows = data.rows;
+
+                    let html = '<table class="w-full text-left text-sm text-slate-600"><thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500"><tr>';
+                    columns.forEach(col => {
+                        html += `<th class="px-6 py-4 whitespace-nowrap">${col}</th>`;
+                    });
+                    html += '</tr></thead><tbody class="divide-y divide-slate-200">';
+
+                    rows.forEach(row => {
+                        html += '<tr class="hover:bg-slate-50">';
+                        columns.forEach(col => {
+                            html += `<td class="px-6 py-4 whitespace-nowrap max-w-xs truncate">${row[col] !== null ? row[col] : 'NULL'}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+
+                    html += '</tbody></table>';
+                    resultsContainer.innerHTML = html;
+                    queryStats.textContent = `${rows.length} rows in ${duration}ms`;
+                } else {
+                    resultsContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">Query executed successfully. No rows returned.</div>';
+                    queryStats.textContent = `0 rows in ${duration}ms`;
+                }
+            } else {
+                resultsContainer.innerHTML = `<div class="p-6"><div class="bg-red-50 border border-red-200 rounded-lg p-4"><p class="text-sm text-red-800">Error: ${data.error || 'Unknown error'}</p></div></div>`;
+                queryStats.textContent = `Error in ${duration}ms`;
+            }
+        } catch (error) {
+            resultsContainer.innerHTML = `<div class="p-6"><div class="bg-red-50 border border-red-200 rounded-lg p-4"><p class="text-sm text-red-800">Error: ${error.message}</p></div></div>`;
+            queryStats.textContent = `Error`;
+        }
+    }
+</script>
 {% endblock %}

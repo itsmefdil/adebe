@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Request, Query
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from app.dependencies import templates, get_current_user
 from app.database import get_db, ConnectionManager
+from app.services.mysql_service import MySQLService
 
 router = APIRouter(prefix="/databases", tags=["mysql"])
 
@@ -18,48 +19,15 @@ async def mysql_dashboard(request: Request, db_id: int):
     if not database or database.type != "MySQL":
         return RedirectResponse(url="/databases")
     
-    connection_details = {
-        "host": database.host,
-        "port": database.port,
-        "database_name": database.database_name,
-        "username": database.username,
-        "password": database.password
-    }
+    service = MySQLService(database)
+    stats = service.get_dashboard_stats()
     
-    try:
-        from app.connectors.mysql_connector import MySQLConnector
-        connector = MySQLConnector(connection_details)
-        
-        # Get server status
-        status_vars = connector.execute_query("SHOW STATUS")
-        variables = connector.execute_query("SHOW VARIABLES")
-        tables = connector.execute_query("SHOW TABLE STATUS")
-        processlist = connector.execute_query("SHOW PROCESSLIST")
-        
-        # Parse status variables
-        status_dict = {item['Variable_name']: item['Value'] for item in status_vars} if status_vars else {}
-        var_dict = {item['Variable_name']: item['Value'] for item in variables} if variables else {}
-        
-        return templates.TemplateResponse("databases/mysql/dashboard.html", {
-            "request": request,
-            "user": user,
-            "database": database,
-            "status": status_dict,
-            "variables": var_dict,
-            "tables": tables if tables else [],
-            "processlist": processlist if processlist else []
-        })
-    except Exception as e:
-        print(f"Error fetching MySQL data: {e}")
-        return templates.TemplateResponse("databases/mysql/dashboard.html", {
-            "request": request,
-            "user": user,
-            "database": database,
-            "status": {},
-            "variables": {},
-            "tables": [],
-            "processlist": []
-        })
+    return templates.TemplateResponse("databases/mysql/dashboard.html", {
+        "request": request,
+        "user": user,
+        "database": database,
+        **stats
+    })
 
 @router.get("/{db_id}/mysql/processlist", response_class=HTMLResponse)
 async def mysql_processlist(request: Request, db_id: int):
@@ -74,36 +42,14 @@ async def mysql_processlist(request: Request, db_id: int):
     if not database or database.type != "MySQL":
         return HTMLResponse("Invalid database", status_code=400)
     
-    connection_details = {
-        "host": database.host,
-        "port": database.port,
-        "database_name": database.database_name,
-        "username": database.username,
-        "password": database.password
-    }
-    
     try:
-        from app.connectors.mysql_connector import MySQLConnector
-        connector = MySQLConnector(connection_details)
-        processlist = connector.execute_query("SHOW PROCESSLIST")
+        service = MySQLService(database)
+        processlist = service.get_processlist()
         
-        html = ""
-        if processlist:
-            for proc in processlist[:10]:
-                html += f"""
-                <tr class="hover:bg-slate-50 transition-colors">
-                    <td class="px-6 py-4 font-mono text-xs">{proc.get('Id', '')}</td>
-                    <td class="px-6 py-4">{proc.get('User', '')}</td>
-                    <td class="px-6 py-4">{proc.get('Command', '')}</td>
-                    <td class="px-6 py-4">{proc.get('Time', '')}</td>
-                    <td class="px-6 py-4">{proc.get('State', '') or ''}</td>
-                    <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">{proc.get('Info', '') or 'NULL'}</td>
-                </tr>
-                """
-        else:
-            html = '<tr><td colspan="6" class="px-6 py-8 text-center text-slate-500">No active processes</td></tr>'
-        
-        return HTMLResponse(html)
+        return templates.TemplateResponse("databases/mysql/partials/processlist_rows.html", {
+            "request": request,
+            "processlist": processlist if processlist else []
+        })
     except Exception as e:
         return HTMLResponse(f'<tr><td colspan="6" class="px-6 py-8 text-center text-red-500">Error: {str(e)}</td></tr>')
 
@@ -129,66 +75,21 @@ async def mysql_table_browse(
     if not database or database.type != "MySQL":
         return RedirectResponse(url="/databases")
     
-    connection_details = {
-        "host": database.host,
-        "port": database.port,
-        "database_name": database.database_name,
-        "username": database.username,
-        "password": database.password
-    }
-    
     try:
-        from app.connectors.mysql_connector import MySQLConnector
-        connector = MySQLConnector(connection_details)
-        
-        # Get column names first
-        columns_info = connector.execute_query(f"SHOW COLUMNS FROM `{table_name}`")
-        columns = [col['Field'] for col in columns_info] if columns_info else []
-        
-        # Build search query
-        where_clause = ""
-        if search and columns:
-            safe_search = search.replace("'", "\\'")
-            conditions = [f"`{col}` LIKE '%{safe_search}%'" for col in columns]
-            where_clause = " WHERE " + " OR ".join(conditions)
-        
-        # Get total count
-        count_query = f"SELECT COUNT(*) as total FROM `{table_name}`{where_clause}"
-        count_result = connector.execute_query(count_query)
-        total_rows = count_result[0]['total'] if count_result else 0
-        
-        # Calculate pagination
-        total_pages = (total_rows + limit - 1) // limit
-        start_index = (page - 1) * limit + 1 if total_rows > 0 else 0
-        end_index = min(page * limit, total_rows)
-        
-        # Build sort clause
-        order_clause = ""
-        if sort_by and sort_by in columns:
-            order_clause = f" ORDER BY `{sort_by}` {sort_order}"
-        
-        # Get table data
-        offset = (page - 1) * limit
-        data_query = f"SELECT * FROM `{table_name}`{where_clause}{order_clause} LIMIT {limit} OFFSET {offset}"
-        rows = connector.execute_query(data_query)
+        service = MySQLService(database)
+        result = service.browse_table(table_name, page, limit, search, sort_by, sort_order)
         
         return templates.TemplateResponse("databases/mysql/browse.html", {
             "request": request,
             "user": user,
             "database": database,
             "table_name": table_name,
-            "columns": columns,
-            "rows": rows if rows else [],
-            "total_rows": total_rows,
             "current_page": page,
             "per_page": limit,
-            "total_pages": total_pages,
-            "start_index": start_index,
-            "end_index": end_index,
-            "end_index": end_index,
             "search": search,
             "sort_by": sort_by,
-            "sort_order": sort_order
+            "sort_order": sort_order,
+            **result
         })
     except Exception as e:
         print(f"Error browsing table: {e}")
@@ -216,51 +117,16 @@ async def mysql_table_structure(request: Request, db_id: int, table_name: str):
     if not database or database.type != "MySQL":
         return RedirectResponse(url="/databases")
     
-    connection_details = {
-        "host": database.host,
-        "port": database.port,
-        "database_name": database.database_name,
-        "username": database.username,
-        "password": database.password
-    }
-    
     try:
-        from app.connectors.mysql_connector import MySQLConnector
-        connector = MySQLConnector(connection_details)
-        
-        # Get column information
-        columns = connector.execute_query(f"SHOW FULL COLUMNS FROM `{table_name}`")
-        
-        # Get index information
-        indexes = connector.execute_query(f"SHOW INDEX FROM `{table_name}`")
-        
-        # Group indexes by Key_name
-        index_dict = {}
-        if indexes:
-            for idx in indexes:
-                key_name = idx['Key_name']
-                if key_name not in index_dict:
-                    index_dict[key_name] = {
-                        'name': key_name,
-                        'type': idx['Index_type'],
-                        'unique': 'Yes' if idx['Non_unique'] == 0 else 'No',
-                        'columns': []
-                    }
-                index_dict[key_name]['columns'].append(idx['Column_name'])
-        
-        # Convert to list
-        indexes_list = []
-        for key, value in index_dict.items():
-            value['columns_str'] = ', '.join(value['columns'])
-            indexes_list.append(value)
+        service = MySQLService(database)
+        structure = service.get_table_structure(table_name)
         
         return templates.TemplateResponse("databases/mysql/structure.html", {
             "request": request,
             "user": user,
             "database": database,
             "table_name": table_name,
-            "columns": columns if columns else [],
-            "indexes": indexes_list
+            **structure
         })
     except Exception as e:
         print(f"Error getting table structure: {e}")
@@ -273,3 +139,317 @@ async def mysql_table_structure(request: Request, db_id: int, table_name: str):
             "indexes": [],
             "error": str(e)
         })
+
+@router.delete("/{db_id}/mysql/tables/{table_name}/rows", response_class=JSONResponse)
+async def mysql_delete_row(
+    request: Request, 
+    db_id: int, 
+    table_name: str,
+    pk_column: str = Query(...),
+    pk_value: str = Query(...)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        result = service.delete_row(table_name, pk_column, pk_value)
+        
+        if "error" in result:
+             return JSONResponse({"error": result["error"]}, status_code=500)
+             
+        return JSONResponse({"success": True, "affected_rows": result.get("affected_rows", 0)})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.get("/{db_id}/mysql/tables/{table_name}/insert", response_class=HTMLResponse)
+async def mysql_insert_row_form(request: Request, db_id: int, table_name: str):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+    
+    try:
+        service = MySQLService(database)
+        # We need column info to build the form
+        structure = service.get_table_structure(table_name)
+        
+        return templates.TemplateResponse("databases/mysql/row_form.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "table_name": table_name,
+            "columns": structure['columns'],
+            "is_edit": False,
+            "row": None
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.post("/{db_id}/mysql/tables/{table_name}/insert", response_class=HTMLResponse)
+async def mysql_insert_row(request: Request, db_id: int, table_name: str):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+    
+    try:
+        service = MySQLService(database)
+        form_data = await request.form()
+        
+        # Process form data
+        data = {}
+        structure = service.get_table_structure(table_name)
+        columns = structure['columns']
+        
+        for col in columns:
+            field_name = col['Field']
+            is_null = form_data.get(f"{field_name}_null")
+            value = form_data.get(field_name)
+            
+            if is_null:
+                data[field_name] = None
+            else:
+                data[field_name] = value
+        
+        result = service.insert_row(table_name, data)
+        
+        if "error" in result:
+             return templates.TemplateResponse("databases/mysql/row_form.html", {
+                "request": request,
+                "user": user,
+                "database": database,
+                "table_name": table_name,
+                "columns": columns,
+                "is_edit": False,
+                "row": data, # Preserve input
+                "error": result["error"]
+            })
+            
+        return RedirectResponse(url=f"/databases/{db_id}/mysql/tables/{table_name}/browse", status_code=303)
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.get("/{db_id}/mysql/tables/{table_name}/rows/edit", response_class=HTMLResponse)
+async def mysql_edit_row_form(
+    request: Request, 
+    db_id: int, 
+    table_name: str,
+    pk_column: str = Query(...),
+    pk_value: str = Query(...)
+):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+    
+    try:
+        service = MySQLService(database)
+        structure = service.get_table_structure(table_name)
+        row = service.get_row(table_name, pk_column, pk_value)
+        
+        if not row:
+            return HTMLResponse("Row not found", status_code=404)
+        
+        return templates.TemplateResponse("databases/mysql/row_form.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "table_name": table_name,
+            "columns": structure['columns'],
+            "is_edit": True,
+            "row": row
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.post("/{db_id}/mysql/tables/{table_name}/rows/edit", response_class=HTMLResponse)
+async def mysql_update_row(
+    request: Request, 
+    db_id: int, 
+    table_name: str,
+    pk_column: str = Query(...),
+    pk_value: str = Query(...)
+):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+    
+    try:
+        service = MySQLService(database)
+        form_data = await request.form()
+        
+        # Process form data
+        data = {}
+        structure = service.get_table_structure(table_name)
+        columns = structure['columns']
+        
+        for col in columns:
+            field_name = col['Field']
+            # Skip PK update? Usually yes, unless we want to allow it. 
+            # For now let's allow it but we need to be careful.
+            # Actually, usually we don't update PK.
+            if field_name == pk_column:
+                continue
+                
+            is_null = form_data.get(f"{field_name}_null")
+            value = form_data.get(field_name)
+            
+            if is_null:
+                data[field_name] = None
+            else:
+                data[field_name] = value
+        
+        result = service.update_row(table_name, pk_column, pk_value, data)
+        
+        if "error" in result:
+             return templates.TemplateResponse("databases/mysql/row_form.html", {
+                "request": request,
+                "user": user,
+                "database": database,
+                "table_name": table_name,
+                "columns": columns,
+                "is_edit": True,
+                "row": {**data, pk_column: pk_value}, 
+                "error": result["error"]
+            })
+            
+        return RedirectResponse(url=f"/databases/{db_id}/mysql/tables/{table_name}/browse", status_code=303)
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.get("/{db_id}/mysql/create-table", response_class=HTMLResponse)
+async def mysql_create_table_form(request: Request, db_id: int):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+        
+    return templates.TemplateResponse("databases/mysql/create_table.html", {
+        "request": request,
+        "user": user,
+        "database": database
+    })
+
+@router.post("/{db_id}/mysql/create-table", response_class=JSONResponse)
+async def mysql_create_table(request: Request, db_id: int):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        data = await request.json()
+        table_name = data.get('table_name')
+        columns = data.get('columns')
+        
+        if not table_name or not columns:
+            return JSONResponse({"error": "Missing table name or columns"}, status_code=400)
+            
+        service = MySQLService(database)
+        service.create_table(table_name, columns)
+        
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.delete("/{db_id}/mysql/tables/{table_name}", response_class=JSONResponse)
+async def mysql_drop_table(request: Request, db_id: int, table_name: str):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        service.drop_table(table_name)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.post("/{db_id}/mysql/query", response_class=JSONResponse)
+async def mysql_execute_query(request: Request, db_id: int):
+    # ... (existing code) ...
+    try:
+        # ... (existing code) ...
+        return JSONResponse({
+            "success": True, 
+            "columns": columns, 
+            "rows": rows if rows else []
+        })
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.get("/{db_id}/mysql/stats", response_class=JSONResponse)
+async def mysql_get_stats(request: Request, db_id: int):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        stats = service.get_dashboard_stats()
+        # stats contains 'tables', 'status', 'variables', 'processlist'
+        # We need to make sure everything is JSON serializable
+        # The tables list contains Row objects or dicts, which should be fine.
+        return JSONResponse(stats)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)

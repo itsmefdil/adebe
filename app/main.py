@@ -7,12 +7,19 @@ from .auth import authenticate_user
 from .database import get_db, ConnectionManager
 from .dependencies import templates, get_current_user
 from .api import databases, mysql, postgresql, mongodb, sqlite, elasticsearch
+from .exceptions import global_exception_handler, not_found_handler
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
+app.add_exception_handler(Exception, global_exception_handler)
+app.add_exception_handler(404, not_found_handler)
+
 # Add session middleware for simple auth
-app.add_middleware(SessionMiddleware, secret_key="secret-key-should-be-env-var")
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "default-secret-key"))
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
@@ -71,14 +78,32 @@ async def query_builder(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
-    return templates.TemplateResponse("query.html", {"request": request, "user": user})
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    databases = manager.get_all_connections()
+    
+    return templates.TemplateResponse("query.html", {
+        "request": request, 
+        "user": user,
+        "databases": databases
+    })
 
 @app.get("/visualization", response_class=HTMLResponse)
 async def visualization(request: Request):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
-    return templates.TemplateResponse("visualization.html", {"request": request, "user": user})
+    
+    db_session = next(get_db())
+    manager = ConnectionManager(db_session)
+    databases = manager.get_all_connections()
+    
+    return templates.TemplateResponse("visualization.html", {
+        "request": request, 
+        "user": user,
+        "databases": databases
+    })
 
 @app.get("/import", response_class=HTMLResponse)
 async def import_data(request: Request):
