@@ -57,14 +57,13 @@ async def logout(request: Request):
     return RedirectResponse(url="/login")
 
 @app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard(request: Request):
+async def dashboard(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
     
     # Fetch real connections
-    db_session = next(get_db())
-    manager = ConnectionManager(db_session)
+    manager = ConnectionManager(db)
     databases = manager.get_all_connections()
     
     return templates.TemplateResponse("dashboard.html", {
@@ -74,13 +73,12 @@ async def dashboard(request: Request):
     })
 
 @app.get("/query", response_class=HTMLResponse)
-async def query_builder(request: Request):
+async def query_builder(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
     
-    db_session = next(get_db())
-    manager = ConnectionManager(db_session)
+    manager = ConnectionManager(db)
     databases = manager.get_all_connections()
     
     return templates.TemplateResponse("query.html", {
@@ -90,13 +88,12 @@ async def query_builder(request: Request):
     })
 
 @app.get("/visualization", response_class=HTMLResponse)
-async def visualization(request: Request):
+async def visualization(request: Request, db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
     
-    db_session = next(get_db())
-    manager = ConnectionManager(db_session)
+    manager = ConnectionManager(db)
     databases = manager.get_all_connections()
     
     return templates.TemplateResponse("visualization.html", {
