@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Database Dashboard{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -24,19 +26,24 @@
             width: 8px;
             height: 8px;
         }
+
         ::-webkit-scrollbar-track {
-            background: #f1f5f9; 
+            background: #f1f5f9;
         }
+
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
+            background: #cbd5e1;
             border-radius: 4px;
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+            background: #94a3b8;
         }
     </style>
 </head>
+
 <body class="bg-slate-50 text-slate-900 font-sans antialiased h-screen flex overflow-hidden">
     {% block content %}{% endblock %}
 </body>
+
 </html>

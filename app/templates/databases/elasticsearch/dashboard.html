@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Elasticsearch Dashboard - Database Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Elasticsearch Cluster</h2>
+        </div>
+        <div class="flex items-center gap-3">
+            <span
+                class="flex items-center gap-2 px-3 py-1 {% if stats and stats.health == 'green' %}bg-green-100 text-green-700{% elif stats and stats.health == 'yellow' %}bg-yellow-100 text-yellow-700{% else %}bg-red-100 text-red-700{% endif %} rounded-full text-sm font-medium">
+                <span
+                    class="w-2 h-2 rounded-full {% if stats and stats.health == 'green' %}bg-green-500{% elif stats and stats.health == 'yellow' %}bg-yellow-500{% else %}bg-red-500{% endif %}"></span>
+                Health: {{ stats.health|upper if stats else 'Unknown' }}
+            </span>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+        <!-- Cluster Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Nodes</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ stats.nodes if stats else 0 }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Indices</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ stats.indices if stats else 0 }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Total Documents</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ stats.docs if stats else 0 }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Data Size</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ (stats.size / 1024 / 1024)|round(2) if stats else 0 }}
+                    MB</div>
+            </div>
+        </div>
+
+        <!-- Indices -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">Indices</h3>
+                <button onclick="showCreateIndexModal()"
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                    + Create Index
+                </button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Name</th>
+                            <th class="px-6 py-4">Health</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4">Docs</th>
+                            <th class="px-6 py-4">Size</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for index in indices %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ index.index }}</td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="{% if index.health == 'green' %}text-green-600{% elif index.health == 'yellow' %}text-yellow-600{% else %}text-red-600{% endif %} font-medium">
+                                    {{ index.health }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">{{ index.status }}</td>
+                            <td class="px-6 py-4">{{ index['docs.count'] }}</td>
+                            <td class="px-6 py-4">{{ index['store.size'] }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/{{ database.id }}/elasticsearch/{{ index.index }}/inspect"
+                                        class="text-primary hover:text-blue-700 font-medium">Inspect</a>
+                                    <button onclick="confirmDeleteIndex('{{ index.index }}')"
+                                        class="text-red-600 hover:text-red-700 font-medium">
+                                        Delete
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Search Console -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-96">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">Search Console</h3>
+                <select id="queryTemplate" onchange="loadQueryTemplate()"
+                    class="text-xs border border-slate-300 rounded px-3 py-1.5 outline-none">
+                    <option value="">Query Templates...</option>
+                    <option value="match_all">Match All</option>
+                    <option value="match">Match Query</option>
+                    <option value="term">Term Query</option>
+                    <option value="range">Range Query</option>
+                    <option value="bool">Bool Query</option>
+                    <option value="wildcard">Wildcard Query</option>
+                    <option value="aggregation">Aggregation</option>
+                </select>
+            </div>
+            <form hx-post="/databases/{{ database.id }}/elasticsearch/query" hx-target="#query-result"
+                hx-swap="innerHTML" class="flex-1 flex flex-col md:flex-row">
+                <div class="w-full md:w-1/2 p-4 border-r border-slate-200 flex flex-col">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase">Method</span>
+                        <select name="method" class="text-xs border border-slate-300 rounded px-2 py-1 outline-none">
+                            <option>GET</option>
+                            <option selected>POST</option>
+                            <option>PUT</option>
+                            <option>DELETE</option>
+                        </select>
+                        <input type="text" name="endpoint"
+                            class="flex-1 text-xs border border-slate-300 rounded px-2 py-1 outline-none font-mono"
+                            value="/_search" placeholder="/endpoint">
+                    </div>
+                    <textarea id="queryBody" name="query"
+                        class="flex-1 p-3 font-mono text-xs bg-slate-50 border border-slate-200 rounded-lg outline-none resize-none"
+                        placeholder='{\n    "query": {\n        "match_all": {}\n    }\n}'>{\n    "query": {\n        "match_all": {}\n    }\n}</textarea>
+                    <button type="submit"
+                        class="mt-3 w-full py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                        Run Query
+                    </button>
+                </div>
+                <div id="query-result"
+                    class="w-full md:w-1/2 p-4 bg-slate-900 text-slate-300 font-mono text-xs overflow-auto">
+                    <pre>Click "Run Query" to execute...</pre>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+<!-- Create Index Modal -->
+<div id="createIndexModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="text-xl font-bold text-slate-800">Create New Index</h3>
+            <button onclick="hideCreateIndexModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <form hx-post="/databases/{{ database.id }}/elasticsearch/indices/create" hx-swap="none"
+            hx-on::after-request="if(event.detail.successful) { hideCreateIndexModal(); window.location.reload(); }">
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Index Name *</label>
+                    <input type="text" name="index_name" required
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="my-index">
+                    <p class="text-xs text-slate-500 mt-1">Lowercase only, no spaces</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Number of Shards</label>
+                        <input type="number" name="shards" value="1" min="1"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Number of Replicas</label>
+                        <input type="number" name="replicas" value="1" min="0"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Mappings (Optional JSON)</label>
+                    <textarea name="mappings" rows="6"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary font-mono text-xs"
+                        placeholder='{\n  "properties": {\n    "title": { "type": "text" },\n    "timestamp": { "type": "date" }\n  }\n}'></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Settings (Optional JSON)</label>
+                    <textarea name="settings" rows="4"
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary font-mono text-xs"
+                        placeholder='{\n  "analysis": {\n    "analyzer": { ... }\n  }\n}'></textarea>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+                <button type="button" onclick="hideCreateIndexModal()"
+                    class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600">
+                    Create Index
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Index Modal -->
+<div id="deleteIndexModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+        <div class="px-6 py-4 border-b border-slate-200">
+            <h3 class="text-xl font-bold text-red-600">Delete Index</h3>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-sm text-red-800 font-medium mb-2">⚠️ Warning: This action cannot be undone!</p>
+                <p class="text-sm text-red-700">This will permanently delete the index and all its documents.</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-slate-700 mb-2">
+                    Type <span id="deleteIndexNameDisplay" class="font-mono font-bold"></span> to confirm:
+                    <button type="button" onclick="copyIndexName()"
+                        class="ml-2 text-xs text-primary hover:text-blue-700 font-medium">
+                        📋 Copy
+                    </button>
+                </label>
+                <input type="text" id="deleteIndexNameInput"
+                    class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-red-500"
+                    placeholder="Enter index name">
+            </div>
+        </div>
+        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+            <button type="button" onclick="hideDeleteIndexModal()"
+                class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">
+                Cancel
+            </button>
+            <button type="button" id="confirmDeleteBtn" onclick="executeDeleteIndex()" disabled
+                class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Delete Index
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showCreateIndexModal() {
+        document.getElementById('createIndexModal').classList.remove('hidden');
+    }
+
+    function hideCreateIndexModal() {
+        document.getElementById('createIndexModal').classList.add('hidden');
+    }
+
+    let indexToDelete = '';
+
+    function confirmDeleteIndex(indexName) {
+        indexToDelete = indexName;
+        document.getElementById('deleteIndexNameDisplay').textContent = indexName;
+        document.getElementById('deleteIndexNameInput').value = '';
+        document.getElementById('confirmDeleteBtn').disabled = true;
+        document.getElementById('deleteIndexModal').classList.remove('hidden');
+    }
+
+    function hideDeleteIndexModal() {
+        document.getElementById('deleteIndexModal').classList.add('hidden');
+        indexToDelete = '';
+    }
+
+    // Enable delete button only when index name matches
+    document.getElementById('deleteIndexNameInput').addEventListener('input', function (e) {
+        const confirmBtn = document.getElementById('confirmDeleteBtn');
+        if (e.target.value === indexToDelete) {
+            confirmBtn.disabled = false;
+        } else {
+            confirmBtn.disabled = true;
+        }
+    });
+
+    function copyIndexName() {
+        const indexName = indexToDelete;
+        navigator.clipboard.writeText(indexName).then(() => {
+            // Visual feedback
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        });
+    }
+
+    function executeDeleteIndex() {
+        if (document.getElementById('deleteIndexNameInput').value === indexToDelete) {
+            htmx.ajax('POST', `/databases/{{ database.id }}/elasticsearch/indices/${indexToDelete}/delete`, {
+                swap: 'none'
+            }).then(() => {
+                hideDeleteIndexModal();
+                window.location.reload();
+            });
+        }
+    }
+
+    function loadQueryTemplate() {
+        const template = document.getElementById('queryTemplate').value;
+        const queryBody = document.getElementById('queryBody');
+
+        const templates = {
+            match_all: `{\n  "query": {\n    "match_all": {}\n  }\n}`,
+            match: `{\n  "query": {\n    "match": {\n      "field_name": "search text"\n    }\n  }\n}`,
+            term: `{\n  "query": {\n    "term": {\n      "field_name.keyword": "exact value"\n    }\n  }\n}`,
+            range: `{\n  "query": {\n    "range": {\n      "timestamp": {\n        "gte": "2024-01-01",\n        "lte": "2024-12-31"\n      }\n    }\n  }\n}`,
+            bool: `{\n  "query": {\n    "bool": {\n      "must": [\n        { "match": { "field1": "value1" } }\n      ],\n      "should": [\n        { "term": { "field2": "value2" } }\n      ],\n      "must_not": [\n        { "exists": { "field": "field3" } }\n      ]\n    }\n  }\n}`,
+            wildcard: `{\n  "query": {\n    "wildcard": {\n      "field_name": "*pattern*"\n    }\n  }\n}`,
+            aggregation: `{\n  "size": 0,\n  "aggs": {\n    "group_by_field": {\n      "terms": {\n        "field": "field_name.keyword",\n        "size": 10\n      }\n    }\n  }\n}`
+        };
+
+        if (template && templates[template]) {
+            queryBody.value = templates[template];
+        }
+    }
+</script>
+{% endblock %}

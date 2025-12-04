@@ -21,77 +21,134 @@
 
     <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-2xl mx-auto">
-            <form action="/databases/new" method="post"
-                class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
+            <form action="{% if is_edit %}/databases/{{ database.id }}/edit{% else %}/databases/new{% endif %}"
+                method="post" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
+
                 <div class="grid grid-cols-2 gap-6">
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Connection Name</label>
-                        <input type="text" name="name"
+                        <input type="text" name="name" value="{{ database.name if database else '' }}" required
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="e.g. Production DB">
                     </div>
 
                     <div class="col-span-2">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Database Type</label>
-                        <select name="type"
+                        <select name="type" id="type-select"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                            <option value="postgresql">PostgreSQL</option>
-                            <option value="mysql">MySQL</option>
-                            <option value="sqlite">SQLite</option>
-                            <option value="mongodb">MongoDB</option>
-                            <option value="elasticsearch">Elasticsearch</option>
+                            <option value="PostgreSQL" {% if database and database.type=='PostgreSQL' %}selected{% endif
+                                %}>PostgreSQL</option>
+                            <option value="MySQL" {% if database and database.type=='MySQL' %}selected{% endif %}>MySQL
+                            </option>
+                            <option value="SQLite" {% if database and database.type=='SQLite' %}selected{% endif %}>
+                                SQLite</option>
+                            <option value="MongoDB" {% if database and database.type=='MongoDB' %}selected{% endif %}>
+                                MongoDB</option>
+                            <option value="Elasticsearch" {% if database and database.type=='Elasticsearch' %}selected{%
+                                endif %}>Elasticsearch</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Host</label>
-                        <input type="text" name="host"
+                    <div class="col-span-2" id="field-host">
+                        <label class="block text-sm font-medium text-slate-700 mb-1" id="label-host">Host</label>
+                        <input type="text" name="host" value="{{ database.host if database else '' }}"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="localhost">
                     </div>
 
-                    <div>
+                    <div class="col-span-2" id="field-port">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Port</label>
-                        <input type="number" name="port"
+                        <input type="number" name="port" value="{{ database.port if database else '' }}"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="5432">
                     </div>
 
-                    <div class="col-span-2">
+                    <div class="col-span-2" id="field-database">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Database Name</label>
-                        <input type="text" name="database"
+                        <input type="text" name="database_name"
+                            value="{{ database.database_name if database and database.database_name else '' }}"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="my_database">
                     </div>
 
-                    <div>
+                    <div class="col-span-1" id="field-username">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
                         <input type="text" name="username"
+                            value="{{ database.username if database and database.username else '' }}"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="user">
                     </div>
 
-                    <div>
+                    <div class="col-span-1" id="field-password">
                         <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
                         <input type="password" name="password"
+                            value="{{ database.password if database and database.password else '' }}"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                             placeholder="••••••••">
                     </div>
                 </div>
 
                 <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
-                    <button type="button" class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Test
-                        Connection</button>
+                    <div class="flex items-center gap-4">
+                        <button type="button" hx-post="/databases/test" hx-target="#test-result"
+                            hx-include="closest form" hx-indicator="#test-indicator"
+                            class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                            Test Connection
+                        </button>
+                        <span id="test-indicator"
+                            class="htmx-indicator text-sm font-medium text-slate-500">Testing...</span>
+                        <span id="test-result"></span>
+                    </div>
                     <div class="flex items-center gap-3">
                         <a href="/databases"
                             class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancel</a>
                         <button type="submit"
-                            class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">Save
-                            Connection</button>
+                            class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                            {% if is_edit %}Update{% else %}Save{% endif %} Connection
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
 </main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const typeSelect = document.getElementById('type-select');
+        const fieldHost = document.getElementById('field-host');
+        const labelHost = document.getElementById('label-host');
+        const fieldPort = document.getElementById('field-port');
+        const fieldDatabase = document.getElementById('field-database');
+        const fieldUsername = document.getElementById('field-username');
+        const fieldPassword = document.getElementById('field-password');
+
+        function updateFields() {
+            const type = typeSelect.value;
+
+            // Reset all
+            fieldHost.style.display = 'block';
+            fieldPort.style.display = 'block';
+            fieldDatabase.style.display = 'block';
+            fieldUsername.style.display = 'block';
+            fieldPassword.style.display = 'block';
+            labelHost.textContent = 'Host';
+
+            if (type === 'SQLite') {
+                labelHost.textContent = 'Database File Path';
+                fieldPort.style.display = 'none';
+                fieldDatabase.style.display = 'none';
+                fieldUsername.style.display = 'none';
+                fieldPassword.style.display = 'none';
+            } else if (type === 'Elasticsearch') {
+                fieldDatabase.style.display = 'none';
+            }
+        }
+
+        typeSelect.addEventListener('change', updateFields);
+
+        // Initial call
+        updateFields();
+    });
+</script>
 {% endblock %}
