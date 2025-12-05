@@ -111,6 +111,8 @@ def delete_database(request: Request, db_id: int, db: Session = Depends(get_db))
     
     return RedirectResponse(url="/databases", status_code=status.HTTP_303_SEE_OTHER)
 
+from app.utils.security import decrypt_password
+
 @router.post("/test", response_class=HTMLResponse)
 def test_database_connection(
     request: Request,
@@ -125,12 +127,16 @@ def test_database_connection(
     if not user:
         return HTMLResponse('<span class="text-sm font-medium text-red-600">Unauthorized</span>', status_code=401)
 
+    # Decrypt password if it was sent encrypted (e.g. from edit form)
+    # If it's a raw password (new connection or changed), decrypt_password returns it as is
+    decrypted_password = decrypt_password(password)
+
     connection_details = {
         "host": host,
         "port": port,
         "database_name": database_name,
         "username": username,
-        "password": password
+        "password": decrypted_password
     }
 
     try:
@@ -180,7 +186,7 @@ def check_connection_health(request: Request, db_id: int, db: Session = Depends(
         "port": database.port,
         "database_name": database.database_name,
         "username": database.username,
-        "password": database.password
+        "password": decrypt_password(database.password)
     }
     
     try:
