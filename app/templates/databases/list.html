@@ -77,7 +77,7 @@
                                     <a href="/databases/sqlite"
                                         class="text-primary hover:text-blue-700 font-medium text-xs">Manage SQLite</a>
                                     {% elif db.type == 'MongoDB' %}
-                                    <a href="/databases/mongodb"
+                                    <a href="/databases/{{ db.id }}/mongodb"
                                         class="text-primary hover:text-blue-700 font-medium text-xs">Manage Mongo</a>
                                     {% endif %}
                                     <form action="/databases/{{ db.id }}/delete" method="POST"

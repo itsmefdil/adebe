@@ -1,0 +1,203 @@
+<!-- Query Playground Modal -->
+<div id="query-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg max-w-6xl w-full mx-4 flex flex-col max-h-[90vh]">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-primary/10 rounded-lg">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Query Playground</h3>
+                    <p class="text-sm text-slate-500">Run raw SQL queries</p>
+                </div>
+            </div>
+            <button onclick="closeQueryModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto flex-1">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-slate-700">SQL Query</label>
+                            <select id="query-template" onchange="loadTemplate()"
+                                class="text-xs px-3 py-1 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                                <option value="">Select Example...</option>
+                                <option value="select">SELECT Query</option>
+                                <option value="selectWhere">SELECT with WHERE</option>
+                                <option value="selectJoin">SELECT with JOIN</option>
+                                <option value="insert">INSERT Query</option>
+                                <option value="update">UPDATE Query</option>
+                                <option value="delete">DELETE Query</option>
+                                <option value="showTables">SHOW TABLES</option>
+                                <option value="describe">DESCRIBE Table</option>
+                            </select>
+                        </div>
+                        <textarea id="query-input" rows="15"
+                            class="w-full font-mono text-sm p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            placeholder="SELECT * FROM table_name LIMIT 10;"></textarea>
+                    </div>
+                    <div class="flex justify-end">
+                        <button onclick="runQuery()"
+                            class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Run Query
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Result</label>
+                    <div class="relative h-[calc(100%-2rem)]">
+                        <div id="query-result"
+                            class="absolute inset-0 w-full h-full font-mono text-sm bg-slate-50 p-4 rounded-lg border border-slate-200 overflow-auto text-slate-700">
+                            Run a query to see results here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const queryTemplates = {
+        select: `SELECT * FROM table_name LIMIT 10;`,
+        selectWhere: `SELECT column1, column2
+FROM table_name
+WHERE condition = 'value'
+LIMIT 10;`,
+        selectJoin: `SELECT t1.*, t2.column_name
+FROM table1 t1
+INNER JOIN table2 t2 ON t1.id = t2.table1_id
+LIMIT 10;`,
+        insert: `INSERT INTO table_name (column1, column2, column3)
+VALUES ('value1', 'value2', 'value3');`,
+        update: `UPDATE table_name
+SET column1 = 'new_value'
+WHERE id = 1;`,
+        delete: `DELETE FROM table_name
+WHERE id = 1;`,
+        showTables: `SHOW TABLES;`,
+        describe: `DESCRIBE table_name;`
+    };
+
+    function openQueryModal() {
+        document.getElementById('query-modal').classList.remove('hidden');
+        document.getElementById('query-modal').classList.add('flex');
+    }
+
+    function closeQueryModal() {
+        document.getElementById('query-modal').classList.add('hidden');
+        document.getElementById('query-modal').classList.remove('flex');
+    }
+
+    // Close modal on click outside
+    document.getElementById('query-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('query-modal')) {
+            closeQueryModal();
+        }
+    });
+
+    function loadTemplate() {
+        const select = document.getElementById('query-template');
+        const input = document.getElementById('query-input');
+        const template = queryTemplates[select.value];
+
+        if (template) {
+            input.value = template;
+        }
+    }
+
+    async function runQuery() {
+        const input = document.getElementById('query-input').value.trim();
+        const resultDiv = document.getElementById('query-result');
+
+        if (!input) {
+            resultDiv.textContent = 'Please enter a SQL query.';
+            resultDiv.classList.remove('text-slate-700');
+            resultDiv.classList.add('text-red-600');
+            return;
+        }
+
+        try {
+            resultDiv.textContent = 'Running...';
+            resultDiv.classList.remove('text-red-600');
+            resultDiv.classList.add('text-slate-700');
+
+            const response = await fetch('/databases/{{ database.id }}/mysql/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: input }),
+            });
+
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                resultDiv.textContent = 'Error: Server returned non-JSON response. Please check if you are logged in.';
+                resultDiv.classList.remove('text-slate-700');
+                resultDiv.classList.add('text-red-600');
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Display results as a table if there are rows
+                if (data.rows && data.rows.length > 0) {
+                    let html = `<div class="overflow-auto"><table class="w-full text-xs border-collapse">`;
+
+                    // Table header
+                    html += '<thead class="bg-slate-100 sticky top-0"><tr>';
+                    data.columns.forEach(col => {
+                        html += `<th class="border border-slate-300 px-2 py-1 text-left font-semibold">${col}</th>`;
+                    });
+                    html += '</tr></thead>';
+
+                    // Table body
+                    html += '<tbody>';
+                    data.rows.forEach(row => {
+                        html += '<tr class="hover:bg-slate-50">';
+                        data.columns.forEach(col => {
+                            const value = row[col];
+                            const displayValue = value === null ? '<span class="text-slate-400 italic">NULL</span>' : value;
+                            html += `<td class="border border-slate-300 px-2 py-1">${displayValue}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+                    html += '</tbody></table></div>';
+
+                    html += `<div class="mt-2 text-xs text-slate-500">${data.rows.length} row(s) returned</div>`;
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.textContent = 'Query executed successfully. No rows returned.';
+                }
+                resultDiv.classList.remove('text-red-600');
+                resultDiv.classList.add('text-slate-700');
+            } else {
+                resultDiv.textContent = 'Error: ' + (data.error || 'Unknown error');
+                resultDiv.classList.remove('text-slate-700');
+                resultDiv.classList.add('text-red-600');
+            }
+        } catch (e) {
+            resultDiv.textContent = 'Error: ' + e.message;
+            resultDiv.classList.remove('text-slate-700');
+            resultDiv.classList.add('text-red-600');
+        }
+    }
+</script>

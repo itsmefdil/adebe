@@ -4,9 +4,27 @@ from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List, Optional, Any, Dict
+from datetime import datetime, date, time
+from decimal import Decimal
 from app.dependencies import templates, get_current_user
 from app.database import get_db, ConnectionManager
 from app.services.mysql_service import MySQLService
+
+def serialize_value(value):
+    """Convert non-JSON-serializable values to JSON-compatible formats."""
+    if isinstance(value, (datetime, date, time)):
+        return value.isoformat()
+    elif isinstance(value, Decimal):
+        return float(value)
+    elif isinstance(value, bytes):
+        return value.decode('utf-8', errors='replace')
+    return value
+
+def serialize_row(row):
+    """Serialize a single row dictionary."""
+    if isinstance(row, dict):
+        return {key: serialize_value(val) for key, val in row.items()}
+    return row
 
 router = APIRouter(prefix="/databases", tags=["mysql"])
 
@@ -461,11 +479,14 @@ def mysql_execute_query(
         columns = []
         if rows and len(rows) > 0:
             columns = list(rows[0].keys())
+        
+        # Serialize rows to handle datetime, Decimal, and other non-JSON types
+        serialized_rows = [serialize_row(row) for row in rows] if rows else []
             
         return JSONResponse({
             "success": True, 
             "columns": columns, 
-            "rows": rows if rows else []
+            "rows": serialized_rows
         })
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

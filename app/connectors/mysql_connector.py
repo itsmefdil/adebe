@@ -22,7 +22,7 @@ class MySQLConnector(BaseConnector):
             try:
                 _connection_pools[pool_key] = pooling.MySQLConnectionPool(
                     pool_name=pool_key,
-                    pool_size=5,  # Keep a small pool per database connection
+                    pool_size=10,  # Increased pool size to handle concurrent requests
                     pool_reset_session=True,
                     host=self.connection_details.get("host"),
                     port=self.connection_details.get("port", 3306),

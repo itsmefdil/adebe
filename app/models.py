@@ -20,7 +20,12 @@ class DatabaseConnection(Base):
 SQLALCHEMY_DATABASE_URL = "sqlite:///app.db"
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL, 
+    connect_args={"check_same_thread": False},
+    pool_size=20,  # Increase pool size
+    max_overflow=40,  # Allow more overflow connections
+    pool_pre_ping=True,  # Verify connections before using
+    pool_recycle=3600  # Recycle connections after 1 hour
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
