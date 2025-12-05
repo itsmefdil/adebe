@@ -17,7 +17,7 @@ class DatabaseConnection(Base):
     password = Column(String, nullable=True)  # In a real app, encrypt this!
 
 # SQLite database for storing application data (connections, settings, etc.)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./app/data/app.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///app.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
