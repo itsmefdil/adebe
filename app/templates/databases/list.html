@@ -18,93 +18,227 @@
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
-                        <tr>
-                            <th class="px-6 py-4">Name</th>
-                            <th class="px-6 py-4">Type</th>
-                            <th class="px-6 py-4">Host</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        {% for db in databases %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ db.name }}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium">{{
-                                    db.type }}</span>
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs">{{ db.host }}:{{ db.port }}</td>
-                            <td class="px-6 py-4">
-                                <span hx-get="/databases/{{ db.id }}/health" hx-trigger="load, every 30s"
-                                    hx-swap="innerHTML" class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-slate-300"></span>
-                                    Checking...
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex items-center justify-end gap-3">
-                                    <button hx-get="/databases/{{ db.id }}/health"
-                                        hx-target="closest tr td:nth-child(4) span" hx-swap="innerHTML"
-                                        class="text-slate-400 hover:text-primary" title="Test Connection">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                        </svg>
-                                    </button>
-                                    <a href="/databases/{{ db.id }}/edit" class="text-slate-400 hover:text-blue-600"
-                                        title="Edit">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                            </path>
-                                        </svg>
-                                    </a>
-                                    {% if db.type == 'Elasticsearch' %}
-                                    <a href="/databases/{{ db.id }}/elasticsearch"
-                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage ES</a>
-                                    {% elif db.type == 'MySQL' %}
-                                    <a href="/databases/{{ db.id }}/mysql"
-                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage MySQL</a>
-                                    {% elif db.type == 'PostgreSQL' %}
-                                    <a href="/databases/postgresql"
-                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage PG</a>
-                                    {% elif db.type == 'SQLite' %}
-                                    <a href="/databases/sqlite"
-                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage SQLite</a>
-                                    {% elif db.type == 'MongoDB' %}
-                                    <a href="/databases/{{ db.id }}/mongodb"
-                                        class="text-primary hover:text-blue-700 font-medium text-xs">Manage Mongo</a>
-                                    {% endif %}
-                                    <form action="/databases/{{ db.id }}/delete" method="POST"
-                                        onsubmit="return confirmDelete(event, this);" style="display:inline;">
-                                        <button type="submit" class="text-slate-400 hover:text-red-600" title="Delete">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 2 0 00-1 1v3M4 7h16">
-                                                </path>
-                                            </svg>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        {% if databases %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for db in databases %}
+            <div
+                class="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200 overflow-hidden">
+                <!-- Card Header with Database Icon -->
+                <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-4">
+                    <!-- Database Type Icon -->
+                    <div class="flex-shrink-0">
+                        {% if db.type == 'MySQL' %}
+                        <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M16.405 5.501c-.115 0-.193.014-.274.033v.013h.014c.054.104.146.18.214.273.054.107.1.214.154.32l.014-.015c.094-.066.14-.172.14-.333-.04-.047-.046-.094-.08-.14-.04-.067-.126-.1-.18-.153zM5.77 18.695h-.927a50.854 50.854 0 00-.27-4.41h-.008l-1.41 4.41H2.45l-1.4-4.41h-.01a72.892 72.892 0 00-.195 4.41H0c.055-1.966.192-3.81.41-5.53h1.15l1.335 4.064h.008l1.347-4.064h1.095c.242 2.015.384 3.86.428 5.53zm4.017-4.08c-.378 2.045-.876 3.533-1.492 4.46-.482.716-1.01 1.073-1.583 1.073-.153 0-.34-.046-.566-.138v-.494c.11.017.24.026.386.026.268 0 .483-.075.647-.222.197-.18.295-.382.295-.605 0-.155-.077-.47-.23-.944L6.23 14.615h.91l.727 2.36c.164.536.233.91.205 1.123.4-1.064.678-2.227.835-3.483zm12.325 4.08h-2.63v-5.53h.885v4.85h1.745zm-3.32.135l-1.016-.5c.09-.076.177-.158.255-.25.433-.506.648-1.258.648-2.253 0-1.83-.718-2.746-2.155-2.746-.704 0-1.254.232-1.65.697-.43.508-.646 1.256-.646 2.245 0 .972.19 1.686.574 2.14.35.41.877.615 1.583.615.264 0 .506-.033.725-.098l1.325.772.36-.622zM15.5 17.588c-.225-.36-.337-.94-.337-1.736 0-1.393.424-2.09 1.27-2.09.443 0 .77.167.977.5.224.362.336.936.336 1.723 0 1.404-.424 2.108-1.27 2.108-.445 0-.77-.167-.978-.5zm-1.658-.425c0 .47-.172.856-.516 1.156-.344.3-.803.45-1.384.45-.543 0-1.064-.172-1.573-.515l.237-.476c.438.22.833.328 1.19.328.332 0 .593-.073.783-.22a.754.754 0 00.3-.615c0-.33-.23-.61-.648-.845-.388-.213-1.163-.657-1.163-.657-.422-.307-.632-.636-.632-1.177 0-.45.157-.81.47-1.085.315-.278.72-.415 1.22-.415.512 0 .98.136 1.4.41l-.213.476a2.726 2.726 0 00-1.064-.23c-.283 0-.502.068-.654.206a.685.685 0 00-.248.524c0 .328.234.61.666.85.393.215 1.187.67 1.187.67.433.305.648.63.648 1.168zm9.382-5.852c-.535-.014-.95.04-1.297.188-.1.04-.26.04-.274.167.055.053.063.14.11.214.08.134.218.313.346.407.14.11.28.216.427.31.26.16.555.255.81.416.145.094.293.213.44.313.073.05.12.14.214.172v-.02c-.046-.06-.06-.147-.105-.214-.067-.067-.134-.127-.2-.193a3.223 3.223 0 00-.695-.675c-.214-.146-.682-.35-.77-.595l-.013-.014c.146-.013.32-.066.46-.106.227-.06.435-.047.67-.106.106-.027.213-.06.32-.094v-.06c-.12-.12-.21-.283-.334-.395a8.867 8.867 0 00-1.104-.823c-.21-.134-.476-.22-.697-.334-.08-.04-.214-.06-.26-.127-.12-.146-.19-.34-.275-.514a17.69 17.69 0 01-.547-1.163c-.12-.262-.193-.523-.34-.763-.69-1.137-1.437-1.826-2.586-2.5-.247-.14-.543-.2-.856-.274-.167-.008-.334-.02-.5-.027-.11-.047-.216-.174-.31-.235-.38-.24-1.364-.76-1.644-.072-.18.434.267.862.422 1.082.115.153.26.328.34.5.047.116.06.235.107.356.106.294.207.622.347.897.073.14.153.287.247.413.054.073.146.107.167.227-.094.136-.1.334-.154.5-.24.757-.146 1.693.194 2.25.107.166.362.534.703.393.3-.12.234-.5.32-.835.02-.08.007-.133.048-.187v.015c.094.188.188.367.274.555.206.328.566.668.867.895.16.12.287.328.487.402v-.02h-.015c-.043-.058-.1-.086-.154-.133a3.445 3.445 0 01-.35-.4 8.76 8.76 0 01-.747-1.218c-.11-.21-.202-.436-.29-.643-.04-.08-.04-.2-.107-.24-.1.146-.247.273-.32.453-.127.288-.14.642-.188 1.01-.027.007-.014 0-.027.014-.214-.052-.287-.274-.367-.46-.2-.475-.233-1.238-.06-1.785.047-.14.247-.582.167-.716-.042-.127-.174-.2-.247-.303a2.478 2.478 0 01-.24-.427c-.16-.374-.24-.788-.414-1.162-.08-.173-.22-.354-.334-.513-.127-.18-.267-.307-.368-.52-.033-.073-.08-.194-.027-.274.014-.054.042-.075.094-.09.088-.072.335.022.422.062.247.1.455.194.662.334.094.066.195.193.315.226h.14c.214.047.455.014.655.073.355.114.675.28.962.46a5.953 5.953 0 012.085 2.286c.08.154.115.295.188.455.14.33.313.663.455.982.14.315.275.636.476.897.1.14.502.213.682.286.133.06.34.115.46.188.23.14.454.3.67.454.11.076.443.243.463.378z" />
+                            </svg>
+                        </div>
+                        {% elif db.type == 'PostgreSQL' %}
+                        <div class="w-12 h-12 rounded-lg bg-indigo-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M23.5594 14.7228a.5269.5269 0 00-.0563-.1191c-.139-.2632-.4768-.3418-.7822-.1793-.2925.1559-.3887.4768-.2097.7588.0413.0733.0994.1428.1793.2045.0239.0184.0555.0374.0866.0549.0866.0487.185.0784.2723.0862.0733.0065.1405-.0026.2039-.0306.0226-.0097.0445-.0211.0652-.0339.0997-.0607.1818-.1461.2355-.2565.0452-.0921.0678-.1988.0678-.3053 0-.0445-.0058-.0878-.0168-.1292-.0123-.0491-.0329-.0967-.0616-.1422zm-1.1096-1.6764c-.1234-.1293-.2958-.2214-.4896-.2214-.1175 0-.2292.0265-.3311.0733-.0226.0097-.0445.0211-.0652.0339-.0997.0607-.1818.1461-.2355.2565-.0452.0921-.0678.1988-.0678.3053 0 .0445.0058.0878.0168.1292.0123.0491.0329.0967.0616.1422.0239.0374.0555.0733.0933.1045.0794.0652.1818.1045.2925.1045.0239 0 .0478-.0013.0717-.0039.1175-.0155.2266-.0678.3053-.1461.0555-.055.0994-.1214.1305-.1948.0239-.0555.0374-.1162.0374-.1806 0-.0913-.0265-.1766-.0733-.2487-.0239-.0374-.0555-.0733-.0933-.1045z" />
+                            </svg>
+                        </div>
+                        {% elif db.type == 'MongoDB' %}
+                        <div class="w-12 h-12 rounded-lg bg-green-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M17.193 9.555c-1.264-5.58-4.252-7.414-4.573-8.115-.28-.394-.53-.954-.735-1.44-.036.495-.055.685-.523 1.184-.723.566-4.438 3.682-4.74 10.02-.282 5.912 4.27 9.435 4.888 9.884l.07.05A73.49 73.49 0 0111.91 24h.481c.114-1.032.284-2.056.51-3.07.417-.296.604-.463.85-.693a11.342 11.342 0 003.639-8.464c.01-.814-.103-1.662-.197-2.218zm-5.336 8.195s0-8.291.275-8.29c.213 0 .49 10.695.49 10.695-.381-.045-.765-1.76-.765-2.405z" />
+                            </svg>
+                        </div>
+                        {% elif db.type == 'Elasticsearch' %}
+                        <div class="w-12 h-12 rounded-lg bg-yellow-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M13.394 0C10.046 0 7.325 2.721 7.325 6.069v.61H5.653c-.166 0-.332.02-.495.063-1.009.254-1.585 1.271-1.331 2.28l.835 3.34c.254 1.009 1.271 1.585 2.28 1.331.166-.041.32-.103.463-.185v4.838c0 3.348 2.721 6.069 6.069 6.069h5.457c3.348 0 6.069-2.721 6.069-6.069V6.069C25 2.721 22.279 0 18.931 0h-5.537zm0 1.672h5.537c2.427 0 4.397 1.97 4.397 4.397v11.277c0 2.427-1.97 4.397-4.397 4.397h-5.457c-2.427 0-4.397-1.97-4.397-4.397v-5.457c0-.166-.02-.332-.063-.495-.254-1.009-1.271-1.585-2.28-1.331-.166.041-.32.103-.463.185V6.069c0-2.427 1.97-4.397 4.397-4.397h2.726z" />
+                            </svg>
+                        </div>
+                        {% elif db.type == 'SQLite' %}
+                        <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-slate-600" fill="currentColor" viewBox="0 0 24 24">
+                                <path
+                                    d="M21.678 16.086c-.207-.187-.414-.348-.621-.482a3.334 3.334 0 01-.621-.482c-.207-.187-.348-.401-.428-.642-.08-.241-.12-.535-.12-.882 0-.347.04-.641.12-.882.08-.241.221-.455.428-.642.207-.187.414-.348.621-.482.207-.134.414-.295.621-.482.207-.187.348-.401.428-.642.08-.241.12-.535.12-.882 0-.347-.04-.641-.12-.882-.08-.241-.221-.455-.428-.642-.207-.187-.414-.348-.621-.482-.207-.134-.414-.295-.621-.482-.207-.187-.348-.401-.428-.642-.08-.241-.12-.535-.12-.882 0-.347.04-.641.12-.882.08-.241.221-.455.428-.642.207-.187.414-.348.621-.482.207-.134.414-.295.621-.482.207-.187.348-.401.428-.642.08-.241.12-.535.12-.882 0-.347-.04-.641-.12-.882-.08-.241-.221-.455-.428-.642-.207-.187-.414-.348-.621-.482-.207-.134-.414-.295-.621-.482-.207-.187-.348-.401-.428-.642-.08-.241-.12-.535-.12-.882V2h-18v20h18v-5.914z" />
+                            </svg>
+                        </div>
+                        {% else %}
+                        <div class="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center">
+                            <svg class="w-7 h-7 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                                </path>
+                            </svg>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Database Name and Type -->
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-semibold text-slate-900 truncate">{{ db.name }}</h3>
+                        <div class="flex items-center gap-2 mt-1">
+                            {% if db.type == 'MySQL' %}
+                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">MySQL</span>
+                            {% elif db.type == 'PostgreSQL' %}
+                            <span
+                                class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">PostgreSQL</span>
+                            {% elif db.type == 'MongoDB' %}
+                            <span
+                                class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">MongoDB</span>
+                            {% elif db.type == 'Elasticsearch' %}
+                            <span
+                                class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">Elasticsearch</span>
+                            {% elif db.type == 'SQLite' %}
+                            <span
+                                class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium">SQLite</span>
+                            {% else %}
+                            <span class="px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium">{{ db.type
+                                }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Body -->
+                <div class="px-6 py-4 space-y-3">
+                    <!-- Host Info -->
+                    <div class="flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9">
+                            </path>
+                        </svg>
+                        <span class="font-mono text-xs text-slate-600">{{ db.host }}:{{ db.port }}</span>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span hx-get="/databases/{{ db.id }}/health" hx-trigger="load, every 30s" hx-swap="innerHTML"
+                            class="flex items-center gap-2 text-sm">
+                            <span class="w-2 h-2 rounded-full bg-slate-300"></span>
+                            <span class="text-slate-600">Checking...</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Card Footer with Actions -->
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <!-- Primary Action Button -->
+                    {% if db.type == 'Elasticsearch' %}
+                    <a href="/databases/{{ db.id }}/elasticsearch"
+                        class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Manage
+                    </a>
+                    {% elif db.type == 'MySQL' %}
+                    <a href="/databases/{{ db.id }}/mysql"
+                        class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Manage
+                    </a>
+                    {% elif db.type == 'PostgreSQL' %}
+                    <a href="/databases/postgresql"
+                        class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Manage
+                    </a>
+                    {% elif db.type == 'SQLite' %}
+                    <a href="/databases/sqlite"
+                        class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Manage
+                    </a>
+                    {% elif db.type == 'MongoDB' %}
+                    <a href="/databases/{{ db.id }}/mongodb"
+                        class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Manage
+                    </a>
+                    {% endif %}
+
+                    <!-- Secondary Actions -->
+                    <div class="flex items-center gap-1">
+                        <!-- Test Connection -->
+                        <button hx-get="/databases/{{ db.id }}/health"
+                            hx-target="closest .bg-white .flex.items-center.gap-2.text-sm" hx-swap="innerHTML"
+                            class="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-lg transition-colors"
+                            title="Test Connection">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </button>
+
+                        <!-- Edit -->
+                        <a href="/databases/{{ db.id }}/edit"
+                            class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                </path>
+                            </svg>
+                        </a>
+
+                        <!-- Delete -->
+                        <form action="/databases/{{ db.id }}/delete" method="POST"
+                            onsubmit="return confirmDelete(event, this);" style="display:inline;">
+                            <button type="submit"
+                                class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            {% if not databases %}
-            <div class="p-8 text-center text-slate-500">
-                <p>No database connections found.</p>
-                <a href="/databases/new" class="text-primary hover:underline mt-2 inline-block">Add your first
-                    connection</a>
-            </div>
-            {% endif %}
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+            <div class="max-w-md mx-auto">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 mb-2">No database connections</h3>
+                <p class="text-slate-600 mb-6">Get started by adding your first database connection.</p>
+                <a href="/databases/new"
+                    class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Connection
+                </a>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </main>
 
