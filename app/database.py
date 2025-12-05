@@ -35,8 +35,18 @@ class ConnectionManager:
     def update_connection(self, connection_id: int, connection_data: dict):
         db_connection = self.get_connection(connection_id)
         if db_connection:
-            if "password" in connection_data and connection_data["password"]:
-                connection_data["password"] = encrypt_password(connection_data["password"])
+            # Handle password update: only encrypt if it's different from the stored encrypted password
+            if "password" in connection_data:
+                new_password = connection_data["password"]
+                # If password is empty or None, keep the existing password
+                if not new_password:
+                    connection_data.pop("password")
+                # If password is different from the stored encrypted password, encrypt it
+                elif new_password != db_connection.password:
+                    connection_data["password"] = encrypt_password(new_password)
+                # If password is the same as stored (already encrypted), don't re-encrypt
+                else:
+                    connection_data.pop("password")
             
             for key, value in connection_data.items():
                 setattr(db_connection, key, value)

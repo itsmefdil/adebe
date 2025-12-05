@@ -15,6 +15,7 @@ class DatabaseConnection(Base):
     database_name = Column(String, nullable=True)
     username = Column(String, nullable=True)
     password = Column(String, nullable=True)  # In a real app, encrypt this!
+    auth_source = Column(String, nullable=True)  # MongoDB authSource (e.g., 'admin')
 
 # SQLite database for storing application data (connections, settings, etc.)
 SQLALCHEMY_DATABASE_URL = "sqlite:///app.db"
