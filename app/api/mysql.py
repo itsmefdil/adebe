@@ -491,3 +491,176 @@ def mysql_get_stats(request: Request, db_id: int, db: Session = Depends(get_db))
         return JSONResponse(stats)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.get("/{db_id}/mysql/tables/{table_name}/columns/add", response_class=HTMLResponse)
+def mysql_add_column_form(request: Request, db_id: int, table_name: str, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+        
+    try:
+        service = MySQLService(database)
+        structure = service.get_table_structure(table_name)
+        columns = [col['Field'] for col in structure['columns']]
+        
+        return templates.TemplateResponse("databases/mysql/add_column.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "table_name": table_name,
+            "existing_columns": columns
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.post("/{db_id}/mysql/tables/{table_name}/columns", response_class=JSONResponse)
+async def mysql_add_column(
+    request: Request, 
+    db_id: int, 
+    table_name: str, 
+    data: ColumnDefinition,
+    after: Optional[str] = Query(None),
+    first: Optional[bool] = Query(False),
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        col_def = data.dict()
+        if after:
+            col_def['after'] = after
+        if first:
+            col_def['first'] = True
+            
+        await run_in_threadpool(service.add_column, table_name, col_def)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.get("/{db_id}/mysql/tables/{table_name}/columns/{column_name}/edit", response_class=HTMLResponse)
+def mysql_edit_column_form(
+    request: Request, 
+    db_id: int, 
+    table_name: str, 
+    column_name: str, 
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return RedirectResponse(url="/databases")
+        
+    try:
+        service = MySQLService(database)
+        structure = service.get_table_structure(table_name)
+        # Find the column definition
+        column = next((col for col in structure['columns'] if col['Field'] == column_name), None)
+        
+        if not column:
+            return HTMLResponse("Column not found", status_code=404)
+            
+        return templates.TemplateResponse("databases/mysql/edit_column.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "table_name": table_name,
+            "column": column
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.post("/{db_id}/mysql/tables/{table_name}/columns/{column_name}", response_class=JSONResponse)
+async def mysql_modify_column(
+    request: Request, 
+    db_id: int, 
+    table_name: str, 
+    column_name: str,
+    data: ColumnDefinition,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        await run_in_threadpool(service.modify_column, table_name, column_name, data.dict())
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.delete("/{db_id}/mysql/tables/{table_name}/columns/{column_name}", response_class=JSONResponse)
+async def mysql_drop_column(
+    request: Request, 
+    db_id: int, 
+    table_name: str, 
+    column_name: str,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        await run_in_threadpool(service.drop_column, table_name, column_name)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.delete("/{db_id}/mysql/tables/{table_name}/indexes/{index_name}", response_class=JSONResponse)
+async def mysql_drop_index(
+    request: Request, 
+    db_id: int, 
+    table_name: str, 
+    index_name: str,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        await run_in_threadpool(service.drop_index, table_name, index_name)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)

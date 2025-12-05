@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Add Column: {{ table_name }} - MySQL Dashboard{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure"
+                class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Add Column to <span class="text-primary">{{ table_name
+                    }}</span></h2>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-800">Column Definition</h3>
+                </div>
+
+                <form id="addColumnForm" class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Column Name</label>
+                            <input type="text" name="name" required
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                            <select name="type" required
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                                <option value="INT">INT</option>
+                                <option value="VARCHAR">VARCHAR</option>
+                                <option value="TEXT">TEXT</option>
+                                <option value="DATE">DATE</option>
+                                <option value="DATETIME">DATETIME</option>
+                                <option value="BOOLEAN">BOOLEAN</option>
+                                <option value="DECIMAL">DECIMAL</option>
+                                <option value="FLOAT">FLOAT</option>
+                                <option value="JSON">JSON</option>
+                            </select>
+                        </div>
+
+                        <!-- Length -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Length/Values</label>
+                            <input type="text" name="length" placeholder="e.g. 255"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- Default -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Default Value</label>
+                            <input type="text" name="default" placeholder="NULL"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Attributes -->
+                    <div class="flex flex-wrap gap-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="nullable" checked
+                                class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary">
+                            <span class="text-sm text-slate-700">Nullable</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="auto_increment"
+                                class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary">
+                            <span class="text-sm text-slate-700">Auto Increment</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="primary_key"
+                                class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary">
+                            <span class="text-sm text-slate-700">Primary Key</span>
+                        </label>
+                    </div>
+
+                    <!-- Position -->
+                    <div class="border-t border-slate-200 pt-6">
+                        <h4 class="text-sm font-medium text-slate-700 mb-4">Position</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center gap-3">
+                                <input type="radio" name="position" value="end" checked
+                                    class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                                <span class="text-sm text-slate-700">At End of Table</span>
+                            </label>
+
+                            <label class="flex items-center gap-3">
+                                <input type="radio" name="position" value="first"
+                                    class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                                <span class="text-sm text-slate-700">At Beginning of Table</span>
+                            </label>
+
+                            <div class="flex items-center gap-3">
+                                <input type="radio" name="position" value="after"
+                                    class="w-4 h-4 text-primary border-slate-300 focus:ring-primary">
+                                <span class="text-sm text-slate-700">After Column</span>
+                                <select name="after_column"
+                                    class="ml-2 px-3 py-1 text-sm border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                                    {% for col in existing_columns %}
+                                    <option value="{{ col }}">{{ col }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-6 border-t border-slate-200">
+                        <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure"
+                            class="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 font-medium transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 font-medium transition-colors">
+                            Add Column
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    document.getElementById('addColumnForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+            name: formData.get('name'),
+            type: formData.get('type'),
+            length: formData.get('length') || null,
+            default: formData.get('default') || null,
+            nullable: formData.get('nullable') === 'on',
+            auto_increment: formData.get('auto_increment') === 'on',
+            primary_key: formData.get('primary_key') === 'on'
+        };
+
+        const position = formData.get('position');
+        let queryParams = '';
+        if (position === 'first') {
+            queryParams = '?first=true';
+        } else if (position === 'after') {
+            queryParams = `?after=${formData.get('after_column')}`;
+        }
+
+        try {
+            const response = await fetch(`/databases/{{ database.id }}/mysql/tables/{{ table_name }}/columns${queryParams}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                window.location.href = `/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure`;
+            } else {
+                alert('Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}

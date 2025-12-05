@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Column: {{ column.Field }} - MySQL Dashboard{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure"
+                class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Edit Column <span class="text-primary">{{ column.Field
+                    }}</span></h2>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-6 border-b border-slate-200">
+                    <h3 class="text-lg font-semibold text-slate-800">Column Definition</h3>
+                </div>
+
+                <form id="editColumnForm" class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Column Name</label>
+                            <input type="text" name="name" value="{{ column.Field }}" required
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- Type -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                            <select name="type" id="typeSelect" required
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                                <option value="INT">INT</option>
+                                <option value="VARCHAR">VARCHAR</option>
+                                <option value="TEXT">TEXT</option>
+                                <option value="DATE">DATE</option>
+                                <option value="DATETIME">DATETIME</option>
+                                <option value="BOOLEAN">BOOLEAN</option>
+                                <option value="DECIMAL">DECIMAL</option>
+                                <option value="FLOAT">FLOAT</option>
+                                <option value="JSON">JSON</option>
+                            </select>
+                        </div>
+
+                        <!-- Length -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Length/Values</label>
+                            <input type="text" name="length" id="lengthInput"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+
+                        <!-- Default -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Default Value</label>
+                            <input type="text" name="default"
+                                value="{{ column.Default if column.Default is not none else '' }}"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Attributes -->
+                    <div class="flex flex-wrap gap-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="nullable" {% if column.Null=='YES' %}checked{% endif %}
+                                class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary">
+                            <span class="text-sm text-slate-700">Nullable</span>
+                        </label>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="auto_increment" {% if 'auto_increment' in column.Extra
+                                %}checked{% endif %}
+                                class="w-4 h-4 text-primary border-slate-300 rounded focus:ring-primary">
+                            <span class="text-sm text-slate-700">Auto Increment</span>
+                        </label>
+
+                        <!-- Primary Key editing is complex, omitting for now to avoid issues -->
+                    </div>
+
+                    <div class="flex justify-end gap-3 pt-6 border-t border-slate-200">
+                        <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure"
+                            class="px-4 py-2 text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 font-medium transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit"
+                            class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-600 font-medium transition-colors">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Parse initial type and length
+    const fullType = "{{ column.Type }}";
+    const typeMatch = fullType.match(/^([a-z]+)(?:\((.+)\))?/i);
+    if (typeMatch) {
+        const type = typeMatch[1].toUpperCase();
+        const length = typeMatch[2];
+
+        const typeSelect = document.getElementById('typeSelect');
+        // Check if type exists in select, if not add it or select closest match
+        let found = false;
+        for (let i = 0; i < typeSelect.options.length; i++) {
+            if (typeSelect.options[i].value === type) {
+                typeSelect.selectedIndex = i;
+                found = true;
+                break;
+            }
+        }
+
+        if (length) {
+            document.getElementById('lengthInput').value = length;
+        }
+    }
+
+    document.getElementById('editColumnForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+            name: formData.get('name'),
+            type: formData.get('type'),
+            length: formData.get('length') || null,
+            default: formData.get('default') || null,
+            nullable: formData.get('nullable') === 'on',
+            auto_increment: formData.get('auto_increment') === 'on'
+        };
+
+        try {
+            const response = await fetch(window.location.href.replace('/edit', ''), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                window.location.href = `/databases/{{ database.id }}/mysql/tables/{{ table_name }}/structure`;
+            } else {
+                alert('Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error: ' + error.message);
+        }
+    });
+</script>
+{% endblock %}

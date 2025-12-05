@@ -178,3 +178,45 @@ class MySQLService:
         # This is a raw query execution. Security implications should be considered.
         # For a "Query Builder" feature, we assume the user is authorized to run arbitrary SQL.
         return self.connector.execute_query(query)
+
+    def add_column(self, table_name: str, column_def: dict):
+        # column_def: {'name': 'new_col', 'type': 'VARCHAR', 'length': 100, 'nullable': True, 'default': None, 'after': 'id'}
+        definition = self._build_column_definition(column_def)
+        
+        query = f"ALTER TABLE `{table_name}` ADD COLUMN {definition}"
+        if column_def.get('after'):
+            query += f" AFTER `{column_def['after']}`"
+        elif column_def.get('first'):
+            query += " FIRST"
+            
+        return self.connector.execute_query(query)
+
+    def modify_column(self, table_name: str, column_name: str, column_def: dict):
+        definition = self._build_column_definition(column_def)
+        # CHANGE COLUMN old_name new_name definition
+        query = f"ALTER TABLE `{table_name}` CHANGE COLUMN `{column_name}` {definition}"
+        return self.connector.execute_query(query)
+    
+    def drop_column(self, table_name: str, column_name: str):
+        query = f"ALTER TABLE `{table_name}` DROP COLUMN `{column_name}`"
+        return self.connector.execute_query(query)
+
+    def drop_index(self, table_name: str, index_name: str):
+        query = f"DROP INDEX `{index_name}` ON `{table_name}`"
+        return self.connector.execute_query(query)
+
+    def _build_column_definition(self, col: dict):
+        definition = f"`{col['name']}` {col['type']}"
+        if col.get('length'):
+            definition += f"({col['length']})"
+        
+        if not col.get('nullable', True):
+            definition += " NOT NULL"
+        
+        if col.get('auto_increment'):
+            definition += " AUTO_INCREMENT"
+            
+        if col.get('default'):
+            definition += f" DEFAULT '{col['default']}'"
+            
+        return definition

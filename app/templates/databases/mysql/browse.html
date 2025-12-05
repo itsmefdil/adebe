@@ -211,27 +211,36 @@
     </div>
 </main>
 
+{% include "components/delete_modal.html" %}
+
 <script>
     async function deleteRow(pkColumn, pkValue) {
-        if (!confirm('Are you sure you want to delete this row? This action cannot be undone.')) {
-            return;
-        }
+        showDeleteModal(
+            'Delete Row',
+            'Are you sure you want to delete this row? This action cannot be undone.',
+            async () => {
+                try {
+                    // Construct the correct URL: /databases/{db_id}/mysql/tables/{table_name}/rows
+                    // We can use the current path but need to remove '/browse'
+                    const currentPath = window.location.pathname;
+                    const basePath = currentPath.endsWith('/browse') ? currentPath.slice(0, -7) : currentPath;
 
-        try {
-            const response = await fetch(`${window.location.pathname}/rows?pk_column=${pkColumn}&pk_value=${pkValue}`, {
-                method: 'DELETE',
-            });
+                    const response = await fetch(`${basePath}/rows?pk_column=${encodeURIComponent(pkColumn)}&pk_value=${encodeURIComponent(pkValue)}`, {
+                        method: 'DELETE',
+                    });
 
-            const data = await response.json();
+                    const data = await response.json();
 
-            if (response.ok && data.success) {
-                window.location.reload();
-            } else {
-                alert('Error deleting row: ' + (data.error || 'Unknown error'));
+                    if (response.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error deleting row: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error deleting row: ' + error.message);
+                }
             }
-        } catch (error) {
-            alert('Error deleting row: ' + error.message);
-        }
+        );
     }
 </script>
 {% endblock %}

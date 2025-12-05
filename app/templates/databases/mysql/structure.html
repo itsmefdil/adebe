@@ -18,10 +18,10 @@
             </h2>
         </div>
         <div class="flex items-center gap-3">
-            <button
-                class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+            <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/columns/add"
+                class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
                 Add Column
-            </button>
+            </a>
         </div>
     </header>
 
@@ -37,36 +37,29 @@
                         <tr>
                             <th class="px-6 py-4">Name</th>
                             <th class="px-6 py-4">Type</th>
-                            <th class="px-6 py-4">Collation</th>
                             <th class="px-6 py-4">Null</th>
+                            <th class="px-6 py-4">Key</th>
                             <th class="px-6 py-4">Default</th>
                             <th class="px-6 py-4">Extra</th>
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
-                        {% for column in columns %}
+                        {% for col in columns %}
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
-                                {% if column.Key == 'PRI' %}
-                                <svg class="w-4 h-4 text-yellow-500" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z">
-                                    </path>
-                                </svg>
-                                {% endif %}
-                                {{ column.Field }}
-                            </td>
-                            <td class="px-6 py-4 font-mono text-xs">{{ column.Type }}</td>
-                            <td class="px-6 py-4 text-xs">{{ column.Collation or '-' }}</td>
-                            <td class="px-6 py-4">{{ column.Null }}</td>
-                            <td class="px-6 py-4 font-mono text-xs">{{ column.Default or 'NULL' }}</td>
-                            <td class="px-6 py-4 font-mono text-xs">{{ column.Extra or '' }}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ col.Field }}</td>
+                            <td class="px-6 py-4">{{ col.Type }}</td>
+                            <td class="px-6 py-4">{{ col.Null }}</td>
+                            <td class="px-6 py-4">{{ col.Key }}</td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ col.Default if col.Default is not none else
+                                'NULL' }}</td>
+                            <td class="px-6 py-4">{{ col.Extra }}</td>
                             <td class="px-6 py-4 text-right">
                                 <div class="flex items-center justify-end gap-3">
-                                    <button class="text-slate-400 hover:text-blue-600">Change</button>
-                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
+                                    <a href="/databases/{{ database.id }}/mysql/tables/{{ table_name }}/columns/{{ col.Field }}/edit"
+                                        class="text-slate-400 hover:text-blue-600 font-medium">Change</a>
+                                    <button onclick="dropColumn('{{ col.Field }}')"
+                                        class="text-slate-400 hover:text-red-600 font-medium">Drop</button>
                                 </div>
                             </td>
                         </tr>
@@ -81,10 +74,9 @@
             </div>
         </div>
 
-        <!-- Indexes -->
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">Indexes</h3>
+            <div class="p-6 border-b border-slate-200">
+                <h3 class="text-lg font-semibold text-slate-800">Indexes</h3>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
@@ -98,14 +90,15 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200">
-                        {% for index in indexes %}
+                        {% for idx in indexes %}
                         <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ index.name }}</td>
-                            <td class="px-6 py-4">{{ index.type }}</td>
-                            <td class="px-6 py-4">{{ index.unique }}</td>
-                            <td class="px-6 py-4 font-mono text-xs">{{ index.columns_str }}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ idx.name }}</td>
+                            <td class="px-6 py-4">{{ idx.type }}</td>
+                            <td class="px-6 py-4">{{ idx.unique }}</td>
+                            <td class="px-6 py-4">{{ idx.columns_str }}</td>
                             <td class="px-6 py-4 text-right">
-                                <button class="text-slate-400 hover:text-red-600">Drop</button>
+                                <button onclick="dropIndex('{{ idx.name }}')"
+                                    class="text-slate-400 hover:text-red-600 font-medium">Drop</button>
                             </td>
                         </tr>
                         {% endfor %}
@@ -120,4 +113,58 @@
         </div>
     </div>
 </main>
+
+</main>
+
+{% include "components/delete_modal.html" %}
+
+<script>
+    async function dropColumn(columnName) {
+        showDeleteModal(
+            'Drop Column',
+            `Are you sure you want to drop column "${columnName}"? This action cannot be undone.`,
+            async () => {
+                try {
+                    const response = await fetch(`/databases/{{ database.id }}/mysql/tables/{{ table_name }}/columns/${columnName}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            }
+        );
+    }
+
+    async function dropIndex(indexName) {
+        showDeleteModal(
+            'Drop Index',
+            `Are you sure you want to drop index "${indexName}"?`,
+            async () => {
+                try {
+                    const response = await fetch(`/databases/{{ database.id }}/mysql/tables/{{ table_name }}/indexes/${indexName}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error: ' + (result.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            }
+        );
+    }
+</script>
 {% endblock %}
