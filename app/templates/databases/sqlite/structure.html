@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Structure: {{ table_name }} - SQLite Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/sqlite?id={{ database.id }}" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Structure: {{ table_name }}</h2>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div class="flex bg-slate-100 rounded-lg p-1">
+                <a href="/databases/sqlite/table/{{ table_name }}?id={{ database.id }}"
+                    class="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 rounded-md">Data</a>
+                <span
+                    class="px-4 py-1.5 text-sm font-medium bg-white text-slate-800 shadow-sm rounded-md">Structure</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">CID</th>
+                            <th class="px-6 py-4">Name</th>
+                            <th class="px-6 py-4">Type</th>
+                            <th class="px-6 py-4">Nullable</th>
+                            <th class="px-6 py-4">Default</th>
+                            <th class="px-6 py-4">Primary Key</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for col in columns %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-mono">{{ col.cid }}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ col.name }}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs">{{ col.type
+                                    }}</span></td>
+                            <td class="px-6 py-4">
+                                {% if col.notnull == 1 %}
+                                <span class="text-red-500 text-xs font-bold">NO</span>
+                                {% else %}
+                                <span class="text-green-500 text-xs font-bold">YES</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 font-mono text-xs">{{ col.dflt_value if col.dflt_value is not none else
+                                'NULL' }}</td>
+                            <td class="px-6 py-4">
+                                {% if col.pk > 0 %}
+                                <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z">
+                                    </path>
+                                </svg>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

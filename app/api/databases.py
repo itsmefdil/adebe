@@ -288,7 +288,7 @@ def get_manage_button(request: Request, db_id: int, db: Session = Depends(get_db
                 elif database.type == "PostgreSQL":
                     href = f"/databases/{db_id}/postgresql"
                 elif database.type == "SQLite":
-                    href = f"/databases/sqlite"
+                    href = f"/databases/sqlite?id={db_id}"
                 elif database.type == "MongoDB":
                     href = f"/databases/{db_id}/mongodb"
                 else:

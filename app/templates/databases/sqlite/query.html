@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Query Playground - SQLite Manager{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/sqlite?id={{ database.id }}" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Query Playground: {{ database.name }}</h2>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
+        <!-- Query Editor -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <h3 class="font-bold text-slate-800 mb-4">SQL Query</h3>
+            <form hx-post="/databases/sqlite/query" hx-target="#query-results" hx-swap="innerHTML">
+                <input type="hidden" name="id" value="{{ database.id }}">
+                <div class="relative">
+                    <textarea name="query"
+                        class="w-full h-40 p-4 font-mono text-sm bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-primary outline-none resize-y"
+                        placeholder="SELECT * FROM table_name LIMIT 10;">{{ query or '' }}</textarea>
+                </div>
+                <div class="flex justify-end mt-4">
+                    <button type="submit"
+                        class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Run Query
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results Area -->
+        <div id="query-results"
+            class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[200px] flex flex-col">
+            <div class="p-6 text-center text-slate-400 mt-10">
+                Execute a query to see results here
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}

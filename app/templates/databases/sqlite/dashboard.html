@@ -14,30 +14,41 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">SQLite Database</h2>
+            <h2 class="text-2xl font-bold text-slate-800">{{ database.name }} - SQLite</h2>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm text-slate-500 font-mono">/var/lib/data/app.db</span>
+            <button onclick="openQueryModal()"
+                class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Query Playground
+            </button>
+            <span class="text-sm text-slate-500 font-mono">{{ file_info.path if file_info else database.host }}</span>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
-        <!-- File Info -->
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-            <h3 class="font-bold text-slate-800 mb-4">File Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                    <div class="text-sm text-slate-500 mb-1">File Size</div>
-                    <div class="text-2xl font-bold text-slate-800">4.2 MB</div>
-                </div>
-                <div>
-                    <div class="text-sm text-slate-500 mb-1">Permissions</div>
-                    <div class="text-2xl font-bold text-slate-800 font-mono">-rw-r--r--</div>
-                </div>
-                <div>
-                    <div class="text-sm text-slate-500 mb-1">Last Modified</div>
-                    <div class="text-2xl font-bold text-slate-800">Oct 27, 14:30</div>
-                </div>
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">File Size</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ file_info.size_formatted if file_info else 'Unknown'
+                    }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Permissions</h3>
+                <div class="text-3xl font-bold text-slate-800 font-mono">{{ file_info.permissions if file_info else
+                    'Unknown' }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Tables</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ tables|length }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Journal Mode</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ pragma.get('journal_mode', 'Unknown')|upper }}</div>
             </div>
         </div>
 
@@ -45,50 +56,61 @@
             <!-- Schema -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800">Schema Objects</h3>
+                    <h3 class="font-bold text-slate-800">Database Schema</h3>
+                    <div class="flex gap-2">
+                        <button onclick="openQueryModal()"
+                            class="px-3 py-1.5 text-sm font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
+                            Query Playground
+                        </button>
+                        <a href="/databases/sqlite/create-table?id={{ database.id }}"
+                            class="px-3 py-1.5 text-sm font-medium text-white bg-primary hover:bg-blue-600 rounded-lg transition-colors">
+                            + New Table
+                        </a>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-600">
                         <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
                             <tr>
-                                <th class="px-6 py-4">Type</th>
                                 <th class="px-6 py-4">Name</th>
-                                <th class="px-6 py-4">SQL</th>
+                                <th class="px-6 py-4">Type</th>
+                                <th class="px-6 py-4">Rows</th>
                                 <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200">
+                            {% for table in tables %}
                             <tr class="hover:bg-slate-50 transition-colors">
+                                <td class="px-6 py-4 font-medium text-slate-900">{{ table.name }}</td>
                                 <td class="px-6 py-4"><span
-                                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">table</span></td>
-                                <td class="px-6 py-4 font-medium text-slate-900">users</td>
-                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE TABLE users (id INTEGER
-                                    PRIMARY KEY...)</td>
+                                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs uppercase">{{
+                                        table.type }}</span></td>
+                                <td class="px-6 py-4">{{ table.rows if table.rows is not none else '-' }}</td>
                                 <td class="px-6 py-4 text-right">
-                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                    <div class="flex items-center justify-end gap-3">
+                                        {% if table.type == 'table' %}
+                                        <a href="/databases/sqlite/table/{{ table.name }}?id={{ database.id }}"
+                                            class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                        <a href="/databases/sqlite/table/{{ table.name }}/structure?id={{ database.id }}"
+                                            class="text-slate-400 hover:text-slate-600">Structure</a>
+                                        <button onclick="dropTable('{{ table.name }}')"
+                                            class="text-red-400 hover:text-red-600" title="Drop Table">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                </path>
+                                            </svg>
+                                        </button>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4"><span
-                                        class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">table</span></td>
-                                <td class="px-6 py-4 font-medium text-slate-900">settings</td>
-                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE TABLE settings (key
-                                    TEXT, value TEXT...)</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
-                                </td>
+                            {% endfor %}
+                            {% if not tables %}
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-slate-500">No tables found</td>
                             </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4"><span
-                                        class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">index</span>
-                                </td>
-                                <td class="px-6 py-4 font-medium text-slate-900">idx_users_email</td>
-                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs">CREATE INDEX idx_users_email
-                                    ON users(email)</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="text-slate-400 hover:text-red-600">Drop</button>
-                                </td>
-                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
@@ -102,21 +124,16 @@
                 <div class="p-0">
                     <table class="w-full text-left text-sm text-slate-600">
                         <tbody class="divide-y divide-slate-200">
+                            {% for key, value in pragma.items() %}
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">journal_mode</td>
-                                <td class="px-6 py-3 font-mono text-xs text-right">wal</td>
+                                <td class="px-6 py-3 font-medium text-slate-700">{{ key }}</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ value }}</td>
                             </tr>
+                            {% endfor %}
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">synchronous</td>
-                                <td class="px-6 py-3 font-mono text-xs text-right">NORMAL</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">encoding</td>
-                                <td class="px-6 py-3 font-mono text-xs text-right">UTF-8</td>
-                            </tr>
-                            <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">foreign_keys</td>
-                                <td class="px-6 py-3 font-mono text-xs text-right text-green-600">ON</td>
+                                <td class="px-6 py-3 font-medium text-slate-700">Last Modified</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ file_info.last_modified if
+                                    file_info else 'Unknown' }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -125,4 +142,34 @@
         </div>
     </div>
 </main>
+
+{% include "databases/sqlite/query_modal.html" %}
+{% include "components/delete_modal.html" %}
+
+
+<script>
+    async function dropTable(tableName) {
+        showDeleteModal(
+            'Drop Table',
+            `Are you sure you want to drop table "${tableName}"? This action cannot be undone and will delete all data in the table.`,
+            async () => {
+                try {
+                    const response = await fetch(`/databases/sqlite/tables/${tableName}?id={{ database.id }}`, {
+                        method: 'DELETE',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error dropping table: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error dropping table: ' + error.message);
+                }
+            }
+        );
+    }
+</script>
 {% endblock %}
