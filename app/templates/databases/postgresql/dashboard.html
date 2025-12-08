@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}PostgreSQL Dashboard - Database Manager{% endblock %}
+{% block title %}PostgreSQL Dashboard - {{ database.name }}{% endblock %}
 
 {% block content %}
 {% include "components/sidebar.html" %}
@@ -14,128 +14,225 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">PostgreSQL Overview</h2>
+            <h2 class="text-2xl font-bold text-slate-800">{{ database.name }} - PostgreSQL</h2>
         </div>
         <div class="flex items-center gap-3">
-            <span
-                class="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                Active
-            </span>
-            <span class="text-sm text-slate-500">Version: 15.4</span>
+            <button onclick="openQueryModal()"
+                class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                Query Playground
+            </button>
+            <span class="text-sm text-slate-500">{{ settings.get('server_version', 'Unknown') }}</span>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
-        <!-- Stats -->
+        <!-- Server Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h3 class="text-sm font-medium text-slate-500 mb-2">Active Connections</h3>
-                <div class="text-3xl font-bold text-slate-800">85</div>
-                <div class="text-xs text-slate-400 mt-1">Max: 100</div>
+                <div class="text-3xl font-bold text-slate-800">{{ active_connections }}</div>
+                <div class="text-xs text-slate-400 mt-1">Max: {{ max_connections }}</div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Transactions / Sec</h3>
-                <div class="text-3xl font-bold text-slate-800">450</div>
-            </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Cache Hit Ratio</h3>
-                <div class="text-3xl font-bold text-slate-800">99.2%</div>
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Tables</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ tables|length }}</div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h3 class="text-sm font-medium text-slate-500 mb-2">Database Size</h3>
-                <div class="text-3xl font-bold text-slate-800">12.4 GB</div>
+                <div class="text-3xl font-bold text-slate-800">{{ database_size }}</div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h3 class="text-sm font-medium text-slate-500 mb-2">Shared Buffers</h3>
+                <div class="text-3xl font-bold text-slate-800">{{ settings.get('shared_buffers', 'N/A') }}</div>
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-bold text-slate-800">Database Schema</h3>
+                <a href="/databases/{{ database.id }}/postgresql/create-table"
+                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                    Create Table
+                </a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4">Schema</th>
+                            <th class="px-6 py-4">Table Name</th>
+                            <th class="px-6 py-4">Est. Rows</th>
+                            <th class="px-6 py-4">Size</th>
+                            <th class="px-6 py-4">Owner</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        {% for table in tables %}
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 text-slate-500">{{ table.schema }}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900">{{ table.name }}</td>
+                            <td class="px-6 py-4">{{ table.estimated_rows or 0 }}</td>
+                            <td class="px-6 py-4">{{ table.size }}</td>
+                            <td class="px-6 py-4">{{ table.owner }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="/databases/{{ database.id }}/postgresql/tables/{{ table.schema }}/{{ table.name }}/browse"
+                                        class="text-primary hover:text-blue-700 font-medium">Browse</a>
+                                    <a href="/databases/{{ database.id }}/postgresql/tables/{{ table.schema }}/{{ table.name }}/structure"
+                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                    <button onclick="dropTable('{{ table.schema }}', '{{ table.name }}')"
+                                        class="text-red-400 hover:text-red-600" title="Drop Table">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not tables %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No tables found</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Relations (Tables) -->
+            <!-- Active Queries -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800">Relations</h3>
-                    <div class="flex gap-2">
-                        <button class="text-sm text-slate-500 hover:text-slate-800 font-medium">Tables</button>
-                        <button class="text-sm text-slate-400 hover:text-slate-800 font-medium">Views</button>
-                        <button class="text-sm text-slate-400 hover:text-slate-800 font-medium">Materialized
-                            Views</button>
-                    </div>
+                    <h3 class="font-bold text-slate-800">Active Queries</h3>
+                    <button hx-get="/databases/{{ database.id }}/postgresql/activity" hx-target="#activity-body"
+                        hx-swap="innerHTML" class="text-primary hover:text-blue-700 text-sm font-medium">
+                        🔄 Refresh
+                    </button>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left text-sm text-slate-600">
                         <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
                             <tr>
-                                <th class="px-6 py-4">Schema</th>
-                                <th class="px-6 py-4">Name</th>
-                                <th class="px-6 py-4">Type</th>
-                                <th class="px-6 py-4">Owner</th>
-                                <th class="px-6 py-4">Size</th>
-                                <th class="px-6 py-4 text-right">Actions</th>
+                                <th class="px-6 py-4">PID</th>
+                                <th class="px-6 py-4">User</th>
+                                <th class="px-6 py-4">State</th>
+                                <th class="px-6 py-4">Duration</th>
+                                <th class="px-6 py-4">Query</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody id="activity-body" class="divide-y divide-slate-200">
+                            {% for activity in activities %}
                             <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">public</td>
-                                <td class="px-6 py-4 font-medium text-slate-900">users</td>
-                                <td class="px-6 py-4">table</td>
-                                <td class="px-6 py-4">postgres</td>
-                                <td class="px-6 py-4">2.5 MB</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
+                                <td class="px-6 py-4 font-mono text-xs">{{ activity.pid }}</td>
+                                <td class="px-6 py-4">{{ activity.user or 'N/A' }}</td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded-full text-xs font-medium 
+                                        {% if activity.state == 'active' %}bg-green-100 text-green-700
+                                        {% elif activity.state == 'idle' %}bg-blue-100 text-blue-700
+                                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                        {{ activity.state or 'unknown' }}
+                                    </span>
                                 </td>
+                                <td class="px-6 py-4">{{ activity.duration_sec or 0 }}s</td>
+                                <td class="px-6 py-4 font-mono text-xs truncate max-w-xs" title="{{ activity.query }}">
+                                    {{ activity.query[:50] }}{% if activity.query|length > 50 %}...{% endif %}</td>
                             </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">public</td>
-                                <td class="px-6 py-4 font-medium text-slate-900">orders</td>
-                                <td class="px-6 py-4">table</td>
-                                <td class="px-6 py-4">postgres</td>
-                                <td class="px-6 py-4">45 MB</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
-                                </td>
+                            {% endfor %}
+                            {% if not activities %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No active queries</td>
                             </tr>
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-6 py-4">analytics</td>
-                                <td class="px-6 py-4 font-medium text-slate-900">daily_stats</td>
-                                <td class="px-6 py-4">view</td>
-                                <td class="px-6 py-4">postgres</td>
-                                <td class="px-6 py-4">-</td>
-                                <td class="px-6 py-4 text-right">
-                                    <button class="text-primary hover:text-blue-700 font-medium">Browse</button>
-                                </td>
-                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- Active Queries -->
+            <!-- Server Settings -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-800">Active Queries</h3>
+                    <h3 class="font-bold text-slate-800">Server Settings</h3>
                 </div>
                 <div class="p-0">
-                    <ul class="divide-y divide-slate-200">
-                        <li class="p-4 hover:bg-slate-50">
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="text-xs font-mono text-slate-500">PID: 1245</span>
-                                <span class="text-xs font-bold text-green-600">active</span>
-                            </div>
-                            <p class="text-xs font-mono text-slate-700 truncate">SELECT * FROM users WHERE last_login >
-                                NOW() - INTERVAL '1 day'</p>
-                            <div class="mt-2 text-xs text-slate-400">0.05s</div>
-                        </li>
-                        <li class="p-4 hover:bg-slate-50">
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="text-xs font-mono text-slate-500">PID: 1290</span>
-                                <span class="text-xs font-bold text-blue-600">idle</span>
-                            </div>
-                            <p class="text-xs font-mono text-slate-700 truncate">COMMIT</p>
-                            <div class="mt-2 text-xs text-slate-400">12s</div>
-                        </li>
-                    </ul>
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <tbody class="divide-y divide-slate-200">
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">server_version</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('server_version',
+                                    'N/A') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">data_directory</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right truncate max-w-xs"
+                                    title="{{ settings.get('data_directory', 'N/A') }}">{{
+                                    settings.get('data_directory', 'N/A')[:30] }}{% if settings.get('data_directory',
+                                    '')|length > 30 %}...{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">max_connections</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('max_connections',
+                                    'N/A') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">shared_buffers</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('shared_buffers',
+                                    'N/A') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">work_mem</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('work_mem', 'N/A') }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-3 font-medium text-slate-700">effective_cache_size</td>
+                                <td class="px-6 py-3 font-mono text-xs text-right">{{
+                                    settings.get('effective_cache_size', 'N/A') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
     </div>
 </main>
+
+{% include "databases/postgresql/query_modal.html" %}
+{% include "components/delete_modal.html" %}
+
+<script>
+    async function dropTable(schema, tableName) {
+        showDeleteModal(
+            'Drop Table',
+            `Are you sure you want to drop table "${schema}.${tableName}"? This action cannot be undone and will delete all data in the table.`,
+            async () => {
+                try {
+                    const response = await fetch(`/databases/{{ database.id }}/postgresql/tables/${schema}/${tableName}`, {
+                        method: 'DELETE',
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error dropping table: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error dropping table: ' + error.message);
+                }
+            }
+        );
+    }
+</script>
 {% endblock %}

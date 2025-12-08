@@ -25,11 +25,11 @@ class PostgresConnector(BaseConnector):
         finally:
             self.close()
 
-    def execute_query(self, query: str):
+    def execute_query(self, query: str, params=None):
         try:
             self.connect()
             cursor = self.connection.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(query)
+            cursor.execute(query, params)
             if cursor.description:
                 result = cursor.fetchall()
                 return result
@@ -43,3 +43,4 @@ class PostgresConnector(BaseConnector):
             if self.connection:
                 cursor.close()
                 self.close()
+

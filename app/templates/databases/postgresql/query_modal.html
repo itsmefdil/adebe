@@ -1,0 +1,160 @@
+<!-- Query Playground Modal -->
+<div id="query-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+            <h3 class="font-bold text-slate-800">Query Playground</h3>
+            <button onclick="closeQueryModal()" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            <!-- Query Input -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-slate-700">SQL Query</label>
+                <textarea id="query-input" rows="6"
+                    class="w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm"
+                    placeholder="SELECT * FROM table_name LIMIT 10;"></textarea>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="executeQuery()"
+                    class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Execute
+                </button>
+                <button onclick="clearQuery()"
+                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                    Clear
+                </button>
+                <span id="query-status" class="text-sm text-slate-500"></span>
+            </div>
+
+            <!-- Results -->
+            <div id="query-results" class="hidden">
+                <div class="border border-slate-200 rounded-lg overflow-hidden">
+                    <div class="px-4 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+                        <span class="text-sm font-medium text-slate-700">Results</span>
+                        <span id="result-count" class="text-xs text-slate-500"></span>
+                    </div>
+                    <div class="overflow-x-auto max-h-[300px]">
+                        <table id="results-table" class="w-full text-left text-sm text-slate-600">
+                            <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0">
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div id="query-error"
+                class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openQueryModal() {
+        document.getElementById('query-modal').classList.remove('hidden');
+    }
+
+    function closeQueryModal() {
+        document.getElementById('query-modal').classList.add('hidden');
+    }
+
+    function clearQuery() {
+        document.getElementById('query-input').value = '';
+        document.getElementById('query-results').classList.add('hidden');
+        document.getElementById('query-error').classList.add('hidden');
+        document.getElementById('query-status').textContent = '';
+    }
+
+    async function executeQuery() {
+        const query = document.getElementById('query-input').value.trim();
+        if (!query) {
+            alert('Please enter a query');
+            return;
+        }
+
+        const statusEl = document.getElementById('query-status');
+        const resultsEl = document.getElementById('query-results');
+        const errorEl = document.getElementById('query-error');
+
+        statusEl.textContent = 'Executing...';
+        resultsEl.classList.add('hidden');
+        errorEl.classList.add('hidden');
+
+        try {
+            const startTime = performance.now();
+
+            const response = await fetch(`/databases/{{ database.id }}/postgresql/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+            });
+
+            const data = await response.json();
+            const duration = ((performance.now() - startTime) / 1000).toFixed(3);
+
+            if (response.ok && data.success) {
+                if (data.columns && data.columns.length > 0) {
+                    // Show results table
+                    const thead = document.querySelector('#results-table thead');
+                    const tbody = document.querySelector('#results-table tbody');
+
+                    thead.innerHTML = `<tr>${data.columns.map(col => `<th class="px-4 py-3 whitespace-nowrap">${col}</th>`).join('')}</tr>`;
+
+                    tbody.innerHTML = data.rows.map(row =>
+                        `<tr class="hover:bg-slate-50">${data.columns.map(col => {
+                            const val = row[col];
+                            if (val === null) return '<td class="px-4 py-2 text-slate-400 italic">NULL</td>';
+                            return `<td class="px-4 py-2 max-w-xs truncate" title="${val}">${val}</td>`;
+                        }).join('')}</tr>`
+                    ).join('');
+
+                    document.getElementById('result-count').textContent = `${data.rows.length} rows`;
+                    resultsEl.classList.remove('hidden');
+                    statusEl.textContent = `Completed in ${duration}s`;
+                } else {
+                    statusEl.textContent = `Query executed successfully (${duration}s)`;
+                }
+            } else {
+                errorEl.textContent = data.error || 'Unknown error';
+                errorEl.classList.remove('hidden');
+                statusEl.textContent = '';
+            }
+        } catch (error) {
+            errorEl.textContent = error.message;
+            errorEl.classList.remove('hidden');
+            statusEl.textContent = '';
+        }
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            closeQueryModal();
+        }
+    });
+
+    // Execute query on Ctrl+Enter
+    document.getElementById('query-input')?.addEventListener('keydown', function (e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            executeQuery();
+        }
+    });
+</script>

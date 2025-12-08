@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Create Table - PostgreSQL{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+        <div class="flex items-center gap-4">
+            <a href="/databases/{{ database.id }}/postgresql" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800">Create Table</h2>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200">
+                    <h3 class="font-bold text-slate-800">New Table Definition</h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <!-- Table Name -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label for="schema_name" class="block text-sm font-medium text-slate-700">Schema</label>
+                            <input type="text" id="schema_name" value="public"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                        <div class="space-y-2">
+                            <label for="table_name" class="block text-sm font-medium text-slate-700">Table Name</label>
+                            <input type="text" id="table_name" placeholder="my_table"
+                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+
+                    <!-- Columns -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4 class="font-medium text-slate-700">Columns</h4>
+                            <button onclick="addColumn()"
+                                class="px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                                + Add Column
+                            </button>
+                        </div>
+
+                        <div id="columns-container" class="space-y-3">
+                            <!-- Column rows will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                        <a href="/databases/{{ database.id }}/postgresql"
+                            class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                            Cancel
+                        </a>
+                        <button onclick="createTable()"
+                            class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                            Create Table
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const PG_TYPES = [
+        'integer', 'bigint', 'smallint', 'serial', 'bigserial',
+        'varchar', 'text', 'char',
+        'boolean',
+        'date', 'timestamp', 'timestamptz', 'time', 'interval',
+        'numeric', 'real', 'double precision', 'money',
+        'uuid', 'json', 'jsonb',
+        'bytea'
+    ];
+
+    let columnCount = 0;
+
+    function addColumn() {
+        columnCount++;
+        const container = document.getElementById('columns-container');
+
+        const typeOptions = PG_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        const columnHtml = `
+            <div class="column-row flex items-start gap-3 p-4 bg-slate-50 rounded-lg" data-column-id="${columnCount}">
+                <div class="flex-1 grid grid-cols-6 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Name</label>
+                        <input type="text" class="col-name w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="column_name">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Type</label>
+                        <select class="col-type w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                            ${typeOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Length</label>
+                        <input type="text" class="col-length w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="255">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1">Default</label>
+                        <input type="text" class="col-default w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                    </div>
+                    <div class="flex items-end gap-4">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" class="col-pk rounded border-slate-300 text-primary focus:ring-primary">
+                            <span class="text-xs text-slate-600">PK</span>
+                        </label>
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" class="col-nullable rounded border-slate-300 text-primary focus:ring-primary" checked>
+                            <span class="text-xs text-slate-600">Nullable</span>
+                        </label>
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="removeColumn(${columnCount})" class="text-red-400 hover:text-red-600 p-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.insertAdjacentHTML('beforeend', columnHtml);
+    }
+
+    function removeColumn(id) {
+        const row = document.querySelector(`.column-row[data-column-id="${id}"]`);
+        if (row) row.remove();
+    }
+
+    async function createTable() {
+        const schemaName = document.getElementById('schema_name').value.trim();
+        const tableName = document.getElementById('table_name').value.trim();
+
+        if (!tableName) {
+            alert('Please enter a table name');
+            return;
+        }
+
+        const columnRows = document.querySelectorAll('.column-row');
+        if (columnRows.length === 0) {
+            alert('Please add at least one column');
+            return;
+        }
+
+        const columns = [];
+        for (const row of columnRows) {
+            const name = row.querySelector('.col-name').value.trim();
+            const type = row.querySelector('.col-type').value;
+            const length = row.querySelector('.col-length').value.trim();
+            const defaultVal = row.querySelector('.col-default').value.trim();
+            const primaryKey = row.querySelector('.col-pk').checked;
+            const nullable = row.querySelector('.col-nullable').checked;
+
+            if (!name) {
+                alert('Please enter a name for all columns');
+                return;
+            }
+
+            columns.push({
+                name: name,
+                type: type,
+                length: length || null,
+                default: defaultVal || null,
+                primary_key: primaryKey,
+                nullable: nullable
+            });
+        }
+
+        try {
+            const response = await fetch(`/databases/{{ database.id }}/postgresql/create-table`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    schema_name: schemaName,
+                    table_name: tableName,
+                    columns: columns
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                window.location.href = `/databases/{{ database.id }}/postgresql`;
+            } else {
+                alert('Error creating table: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Error creating table: ' + error.message);
+        }
+    }
+
+    // Add initial column
+    addColumn();
+</script>
+{% endblock %}

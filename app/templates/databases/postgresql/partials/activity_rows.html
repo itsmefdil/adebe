@@ -1,0 +1,22 @@
+{% for activity in activities %}
+<tr class="hover:bg-slate-50 transition-colors">
+    <td class="px-6 py-4 font-mono text-xs">{{ activity.pid }}</td>
+    <td class="px-6 py-4">{{ activity.user or 'N/A' }}</td>
+    <td class="px-6 py-4">
+        <span class="px-2 py-1 rounded-full text-xs font-medium 
+            {% if activity.state == 'active' %}bg-green-100 text-green-700
+            {% elif activity.state == 'idle' %}bg-blue-100 text-blue-700
+            {% else %}bg-slate-100 text-slate-700{% endif %}">
+            {{ activity.state or 'unknown' }}
+        </span>
+    </td>
+    <td class="px-6 py-4">{{ activity.duration_sec or 0 }}s</td>
+    <td class="px-6 py-4 font-mono text-xs truncate max-w-xs" title="{{ activity.query }}">{{ activity.query[:50] }}{%
+        if activity.query|length > 50 %}...{% endif %}</td>
+</tr>
+{% endfor %}
+{% if not activities %}
+<tr>
+    <td colspan="5" class="px-6 py-8 text-center text-slate-500">No active queries</td>
+</tr>
+{% endif %}
