@@ -218,3 +218,82 @@ def check_connection_health(request: Request, db_id: int, db: Session = Depends(
     except Exception as e:
         return HTMLResponse('<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-red-500"></span>Error</span>')
 
+@router.get("/{db_id}/manage-button", response_class=HTMLResponse)
+def get_manage_button(request: Request, db_id: int, db: Session = Depends(get_db)):
+    """Return manage button only if database is connected"""
+    user = get_current_user(request)
+    if not user:
+        return HTMLResponse('<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">Unauthorized</span>')
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database:
+        return HTMLResponse('<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">Not Found</span>')
+    
+    connection_details = {
+        "host": database.host,
+        "port": database.port,
+        "database_name": database.database_name,
+        "username": database.username,
+        "password": decrypt_password(database.password)
+    }
+    
+    try:
+        connector = None
+        if database.type == "MySQL":
+            from app.connectors.mysql_connector import MySQLConnector
+            connector = MySQLConnector(connection_details)
+        elif database.type == "PostgreSQL":
+            from app.connectors.postgres_connector import PostgresConnector
+            connector = PostgresConnector(connection_details)
+        elif database.type == "SQLite":
+            from app.connectors.sqlite_connector import SQLiteConnector
+            connector = SQLiteConnector(connection_details)
+        elif database.type == "MongoDB":
+            from app.connectors.mongo_connector import MongoConnector
+            connector = MongoConnector(connection_details)
+        elif database.type == "Elasticsearch":
+            from app.connectors.es_connector import ESConnector
+            connector = ESConnector(connection_details)
+        
+        if connector:
+            success, msg = connector.test_connection()
+            if success:
+                # Return the manage button based on database type
+                if database.type == "Elasticsearch":
+                    href = f"/databases/{db_id}/elasticsearch"
+                elif database.type == "MySQL":
+                    href = f"/databases/{db_id}/mysql"
+                elif database.type == "PostgreSQL":
+                    href = f"/databases/postgresql"
+                elif database.type == "SQLite":
+                    href = f"/databases/sqlite"
+                elif database.type == "MongoDB":
+                    href = f"/databases/{db_id}/mongodb"
+                else:
+                    href = "#"
+                
+                return HTMLResponse(f'''<a href="{href}" class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    Manage
+                </a>''')
+            else:
+                # Not connected - show disabled state
+                return HTMLResponse('''<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                    </svg>
+                    Disconnected
+                </span>''')
+        else:
+            return HTMLResponse('<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">Unknown Type</span>')
+    except Exception as e:
+        return HTMLResponse('''<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            Error
+        </span>''')
