@@ -39,8 +39,8 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-bold text-slate-800">12</span>
-                    <span class="text-sm text-green-500 font-medium">+2 new</span>
+                    <span class="text-3xl font-bold text-slate-800">{{ stats.total_databases }}</span>
+                    <span class="text-sm text-slate-400">registered</span>
                 </div>
             </div>
 
@@ -55,8 +55,8 @@
                     </div>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-bold text-slate-800">84</span>
-                    <span class="text-sm text-slate-400">current</span>
+                    <span class="text-3xl font-bold text-slate-800">{{ databases|length }}</span>
+                    <span class="text-sm text-slate-400">configured</span>
                 </div>
             </div>
 
@@ -97,10 +97,10 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <h3 class="font-bold text-slate-800">Connected Databases</h3>
-                <button
+                <a href="/databases/new"
                     class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
                     Add New Database
-                </button>
+                </a>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
@@ -120,14 +120,16 @@
                                 <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-medium">{{
                                     db.type }}</span>
                             </td>
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4" hx-get="/databases/{{ db.id }}/health" hx-trigger="load"
+                                hx-swap="innerHTML">
                                 <span class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                                    {{ db.status }}
+                                    <span class="w-2 h-2 rounded-full bg-slate-300 animate-pulse"></span>
+                                    Checking...
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                <button class="text-primary hover:text-blue-700 font-medium">Manage</button>
+                            <td class="px-6 py-4 text-right" hx-get="/databases/{{ db.id }}/manage-button"
+                                hx-trigger="load" hx-swap="innerHTML">
+                                <span class="text-slate-400 text-sm">Loading...</span>
                             </td>
                         </tr>
                         {% endfor %}
@@ -140,60 +142,68 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h3 class="font-bold text-slate-800 mb-4">Quick Query</h3>
-                <textarea
-                    class="w-full h-32 p-3 border border-slate-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none mb-3"
-                    placeholder="SELECT * FROM users LIMIT 10;"></textarea>
-                <div class="flex justify-end">
-                    <button
-                        class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors">
-                        Run Query
-                    </button>
-                </div>
+                <form hx-post="/dashboard/quick-query" hx-target="#query-results" hx-swap="innerHTML">
+                    <select name="database_id"
+                        class="w-full p-2 mb-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                        {% for db in databases %}
+                        <option value="{{ db.id }}">{{ db.name }} ({{ db.type }})</option>
+                        {% endfor %}
+                    </select>
+                    <textarea name="query"
+                        class="w-full h-24 p-3 border border-slate-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none mb-3"
+                        placeholder="SELECT * FROM users LIMIT 10;"></textarea>
+                    <div class="flex justify-end">
+                        <button type="submit"
+                            class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors">
+                            Run Query
+                        </button>
+                    </div>
+                </form>
+                <div id="query-results" class="mt-4 max-h-48 overflow-auto"></div>
             </div>
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                 <h3 class="font-bold text-slate-800 mb-4">Recent Activity</h3>
                 <ul class="space-y-4">
+                    {% if activities %}
+                    {% for activity in activities %}
                     <li class="flex items-start gap-3">
                         <div
-                            class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
+                            class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                            {% if activity.icon_type == 'success' %}bg-green-100 text-green-600{% elif activity.icon_type == 'warning' %}bg-yellow-100 text-yellow-600{% elif activity.icon_type == 'error' %}bg-red-100 text-red-600{% else %}bg-blue-100 text-blue-600{% endif %}">
+                            {% if activity.icon_type == 'success' %}
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                                    d="M5 13l4 4L19 7"></path>
                             </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">Backup completed</p>
-                            <p class="text-xs text-slate-500">Production DB • 2 mins ago</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <div
-                            class="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 flex-shrink-0">
+                            {% elif activity.icon_type == 'warning' %}
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
                                 </path>
                             </svg>
-                        </div>
-                        <div>
-                            <p class="text-sm font-medium text-slate-800">High latency detected</p>
-                            <p class="text-xs text-slate-500">Analytics DB • 15 mins ago</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <div
-                            class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
+                            {% elif activity.icon_type == 'error' %}
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
+                            {% else %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% endif %}
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-slate-800">New user created</p>
-                            <p class="text-xs text-slate-500">Admin Panel • 1 hour ago</p>
+                            <p class="text-sm font-medium text-slate-800">{{ activity.description }}</p>
+                            <p class="text-xs text-slate-500">{% if activity.database_name %}{{ activity.database_name
+                                }} • {% endif %}{{ activity.time_ago }}</p>
                         </div>
                     </li>
+                    {% endfor %}
+                    {% else %}
+                    <li class="text-sm text-slate-400 text-center py-4">No recent activity</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>

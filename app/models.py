@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy import Column, Integer, String, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -16,6 +17,16 @@ class DatabaseConnection(Base):
     username = Column(String, nullable=True)
     password = Column(String, nullable=True)  # In a real app, encrypt this!
     auth_source = Column(String, nullable=True)  # MongoDB authSource (e.g., 'admin')
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    action = Column(String)  # e.g., "backup_completed", "connection_created"
+    description = Column(String)  # Human readable description
+    database_name = Column(String, nullable=True)  # Related database if any
+    created_at = Column(DateTime, default=datetime.utcnow)
+    icon_type = Column(String, default="info")  # "info", "warning", "success", "error"
 
 # SQLite database for storing application data (connections, settings, etc.)
 SQLALCHEMY_DATABASE_URL = "sqlite:///app.db"

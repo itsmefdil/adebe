@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Form, status, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
 from app.dependencies import templates, get_current_user
-from app.database import get_db, ConnectionManager
+from app.database import get_db, ConnectionManager, ActivityLogManager
 
 router = APIRouter(prefix="/databases")
 
@@ -51,6 +51,15 @@ def create_database(
     
     manager = ConnectionManager(db)
     manager.create_connection(connection_data)
+    
+    # Log activity
+    activity_manager = ActivityLogManager(db)
+    activity_manager.log_activity(
+        action="connection_created",
+        description=f"Database '{name}' created",
+        database_name=name,
+        icon_type="success"
+    )
     
     return RedirectResponse(url="/databases", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -107,7 +116,18 @@ def delete_database(request: Request, db_id: int, db: Session = Depends(get_db))
         return RedirectResponse(url="/login")
     
     manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    db_name = database.name if database else "Unknown"
     manager.delete_connection(db_id)
+    
+    # Log activity
+    activity_manager = ActivityLogManager(db)
+    activity_manager.log_activity(
+        action="connection_deleted",
+        description=f"Database '{db_name}' deleted",
+        database_name=db_name,
+        icon_type="warning"
+    )
     
     return RedirectResponse(url="/databases", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -274,26 +294,12 @@ def get_manage_button(request: Request, db_id: int, db: Session = Depends(get_db
                 else:
                     href = "#"
                 
-                return HTMLResponse(f'''<a href="{href}" class="flex-1 px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                    Manage
-                </a>''')
+                return HTMLResponse(f'<a href="{href}" class="text-primary hover:text-blue-700 font-medium">Manage</a>')
             else:
                 # Not connected - show disabled state
-                return HTMLResponse('''<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                    </svg>
-                    Disconnected
-                </span>''')
+                return HTMLResponse('<span class="text-slate-400 cursor-not-allowed">Disconnected</span>')
         else:
-            return HTMLResponse('<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">Unknown Type</span>')
+            return HTMLResponse('<span class="text-slate-400">-</span>')
     except Exception as e:
-        return HTMLResponse('''<span class="flex-1 px-4 py-2 bg-slate-300 text-slate-500 text-sm font-medium rounded-lg flex items-center justify-center gap-2 cursor-not-allowed">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-            Error
-        </span>''')
+        return HTMLResponse('<span class="text-red-500 text-sm">Error</span>')
+

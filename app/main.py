@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.orm import Session
 from .auth import authenticate_user
-from .database import get_db, ConnectionManager
+from .database import get_db, ConnectionManager, ActivityLogManager
 from .dependencies import templates, get_current_user
 from .api import databases, mysql, postgresql, mongodb, sqlite, elasticsearch
 from .exceptions import global_exception_handler, not_found_handler
@@ -62,14 +62,21 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse(url="/login")
     
-    # Fetch real connections
+    # Fetch real connections and stats
     manager = ConnectionManager(db)
     databases = manager.get_all_connections()
+    stats = manager.get_stats()
+    
+    # Fetch recent activities
+    activity_manager = ActivityLogManager(db)
+    activities = activity_manager.get_recent_activities(limit=5)
     
     return templates.TemplateResponse("dashboard.html", {
         "request": request, 
         "user": user,
-        "databases": databases
+        "databases": databases,
+        "stats": stats,
+        "activities": activities
     })
 
 @app.get("/query", response_class=HTMLResponse)
@@ -122,3 +129,78 @@ async def backup_restore(request: Request):
     if not user:
         return RedirectResponse(url="/login")
     return templates.TemplateResponse("operations/backup.html", {"request": request, "user": user})
+
+@app.post("/dashboard/quick-query", response_class=HTMLResponse)
+async def execute_quick_query(
+    request: Request,
+    database_id: int = Form(...),
+    query: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    """Execute a quick query from dashboard"""
+    from app.utils.security import decrypt_password
+    
+    user = get_current_user(request)
+    if not user:
+        return HTMLResponse('<div class="text-red-600 text-sm">Unauthorized</div>')
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(database_id)
+    
+    if not database:
+        return HTMLResponse('<div class="text-red-600 text-sm">Database not found</div>')
+    
+    connection_details = {
+        "host": database.host,
+        "port": database.port,
+        "database_name": database.database_name,
+        "username": database.username,
+        "password": decrypt_password(database.password)
+    }
+    
+    try:
+        connector = None
+        if database.type == "MySQL":
+            from app.connectors.mysql_connector import MySQLConnector
+            connector = MySQLConnector(connection_details)
+        elif database.type == "PostgreSQL":
+            from app.connectors.postgres_connector import PostgresConnector
+            connector = PostgresConnector(connection_details)
+        elif database.type == "SQLite":
+            from app.connectors.sqlite_connector import SQLiteConnector
+            connector = SQLiteConnector(connection_details)
+        else:
+            return HTMLResponse(f'<div class="text-yellow-600 text-sm">Quick query not supported for {database.type}</div>')
+        
+        if connector:
+            result = connector.execute_query(query)
+            
+            if isinstance(result, dict) and "error" in result:
+                return HTMLResponse(f'<div class="text-red-600 text-sm">{result["error"]}</div>')
+            
+            if isinstance(result, list) and len(result) > 0:
+                # Build HTML table
+                headers = result[0].keys()
+                html = '<div class="overflow-x-auto"><table class="min-w-full text-sm text-left">'
+                html += '<thead class="bg-slate-100"><tr>'
+                for header in headers:
+                    html += f'<th class="px-3 py-2 font-medium text-slate-700">{header}</th>'
+                html += '</tr></thead><tbody class="divide-y divide-slate-200">'
+                
+                for row in result[:100]:  # Limit to 100 rows
+                    html += '<tr class="hover:bg-slate-50">'
+                    for header in headers:
+                        val = row.get(header, '')
+                        html += f'<td class="px-3 py-2 text-slate-600">{val}</td>'
+                    html += '</tr>'
+                
+                html += '</tbody></table></div>'
+                if len(result) > 100:
+                    html += f'<div class="text-sm text-slate-500 mt-2">Showing 100 of {len(result)} rows</div>'
+                return HTMLResponse(html)
+            elif isinstance(result, dict) and "affected_rows" in result:
+                return HTMLResponse(f'<div class="text-green-600 text-sm">Query executed. Affected rows: {result["affected_rows"]}</div>')
+            else:
+                return HTMLResponse('<div class="text-slate-500 text-sm">Query executed. No results returned.</div>')
+    except Exception as e:
+        return HTMLResponse(f'<div class="text-red-600 text-sm">Error: {str(e)}</div>')
