@@ -56,10 +56,36 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                 <h3 class="font-bold text-slate-800">Database Schema</h3>
-                <a href="/databases/{{ database.id }}/postgresql/create-table"
-                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
-                    Create Table
-                </a>
+                <div class="flex items-center gap-3">
+                    <!-- Schema Filter -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-500">Schema:</label>
+                        <select id="schema-filter" onchange="filterTables()"
+                            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="">All Schemas</option>
+                            {% set schemas = tables | map(attribute='schema') | unique | list %}
+                            {% for schema in schemas %}
+                            <option value="{{ schema }}">{{ schema }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Owner Filter -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-500">Owner:</label>
+                        <select id="owner-filter" onchange="filterTables()"
+                            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                            <option value="">All Owners</option>
+                            {% set owners = tables | map(attribute='owner') | unique | list %}
+                            {% for owner in owners %}
+                            <option value="{{ owner }}">{{ owner }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <a href="/databases/{{ database.id }}/postgresql/create-table"
+                        class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                        Create Table
+                    </a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
@@ -73,9 +99,10 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody id="tables-body" class="divide-y divide-slate-200">
                         {% for table in tables %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 transition-colors table-row" data-schema="{{ table.schema }}"
+                            data-owner="{{ table.owner }}">
                             <td class="px-6 py-4 text-slate-500">{{ table.schema }}</td>
                             <td class="px-6 py-4 font-medium text-slate-900">{{ table.name }}</td>
                             <td class="px-6 py-4">{{ table.estimated_rows or 0 }}</td>
@@ -100,12 +127,16 @@
                         </tr>
                         {% endfor %}
                         {% if not tables %}
-                        <tr>
+                        <tr id="no-tables-row">
                             <td colspan="6" class="px-6 py-8 text-center text-slate-500">No tables found</td>
                         </tr>
                         {% endif %}
                     </tbody>
                 </table>
+            </div>
+            <!-- Table count indicator -->
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-sm text-slate-500">
+                <span id="table-count">{{ tables|length }}</span> table(s) displayed
             </div>
         </div>
 
@@ -211,6 +242,37 @@
 {% include "components/delete_modal.html" %}
 
 <script>
+    function filterTables() {
+        const schemaFilter = document.getElementById('schema-filter').value;
+        const ownerFilter = document.getElementById('owner-filter').value;
+        const rows = document.querySelectorAll('.table-row');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const rowSchema = row.dataset.schema;
+            const rowOwner = row.dataset.owner;
+
+            const schemaMatch = !schemaFilter || rowSchema === schemaFilter;
+            const ownerMatch = !ownerFilter || rowOwner === ownerFilter;
+
+            if (schemaMatch && ownerMatch) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Update count
+        document.getElementById('table-count').textContent = visibleCount;
+
+        // Show/hide no tables message
+        const noTablesRow = document.getElementById('no-tables-row');
+        if (noTablesRow) {
+            noTablesRow.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    }
+
     async function dropTable(schema, tableName) {
         showDeleteModal(
             'Drop Table',
