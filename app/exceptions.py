@@ -10,8 +10,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     """
     print(f"Global error: {exc}")
     
-    # Check if request expects JSON
-    if request.headers.get("accept") == "application/json":
+    # Check if request expects JSON or is an API call
+    if request.headers.get("accept") == "application/json" or request.url.path.startswith(("/api", "/backups")):
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content={"detail": "Internal Server Error", "error": str(exc)}

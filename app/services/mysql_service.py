@@ -220,3 +220,120 @@ class MySQLService:
             definition += f" DEFAULT '{col['default']}'"
             
         return definition
+
+    def export_table_to_file(self, table_name: str, file_path: str, format: str = 'csv'):
+        """Expots table data to a file (CSV or JSON)."""
+        import csv
+        import json
+        
+        # Get columns
+        columns_info = self.connector.execute_query(f"SHOW COLUMNS FROM `{table_name}`")
+        columns = [col['Field'] for col in columns_info] if columns_info else []
+        
+        # Get data
+        query = f"SELECT * FROM `{table_name}`"
+        # Use a server-side cursor or fetchmany if possible for large datasets, 
+        # but for now we'll fetchall from the connector wrapper (which fetches all).
+        # Improvement: Update connector to support yielding rows.
+        rows = self.connector.execute_query(query)
+        
+        if format == 'csv':
+            with open(file_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=columns)
+                writer.writeheader()
+                if rows:
+                    writer.writerows(rows)
+        elif format == 'json':
+            # Handle non-serializable types
+            from datetime import date, datetime
+            from decimal import Decimal
+            
+            def default_serializer(obj):
+                if isinstance(obj, (date, datetime)):
+                    return obj.isoformat()
+                if isinstance(obj, Decimal):
+                    return float(obj)
+                raise TypeError(f"Type {type(obj)} not serializable")
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(rows if rows else [], f, default=default_serializer, indent=2)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+            
+    def import_table_from_file(self, table_name: str, file_path: str, format: str = 'csv'):
+        """Imports data from a file into a table."""
+        import csv
+        import json
+        from datetime import datetime
+
+        data_to_insert = []
+        
+        if format == 'csv':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                data_to_insert = list(reader)
+        elif format == 'json':
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data_to_insert = json.load(f)
+        else:
+            raise ValueError(f"Unsupported format: {format}")
+        
+        if not data_to_insert:
+            return 0
+            
+        # Insert in batches
+        batch_size = 1000
+        total_inserted = 0
+        
+        # Get current table columns to validate/filter data
+        columns_info = self.connector.execute_query(f"SHOW COLUMNS FROM `{table_name}`")
+        valid_columns = {col['Field'] for col in columns_info}
+        
+        for i in range(0, len(data_to_insert), batch_size):
+            batch = data_to_insert[i:i + batch_size]
+            
+            # Clean batch keys
+            cleaned_batch = []
+            for row in batch:
+                cleaned_row = {k: v for k, v in row.items() if k in valid_columns}
+                if cleaned_row:
+                    cleaned_batch.append(cleaned_row)
+            
+            if not cleaned_batch:
+                continue
+                
+            # Prepare insert query
+            # Assuming all rows in batch have same keys. If not, this might fail.
+            # Ideally we check keys of the first item
+            keys = list(cleaned_batch[0].keys())
+            columns_str = ", ".join([f"`{k}`" for k in keys])
+            placeholders = ", ".join(["%s"] * len(keys))
+            
+            query = f"INSERT INTO `{table_name}` ({columns_str}) VALUES ({placeholders})"
+            
+            # Execute batch
+            # Our connector executes one by one in generic execute_query if we pass tuple?
+            # No, our connector doesn't support executemany yet properly exposed.
+            # Let's verify connector.execute_query implementation.
+            # It takes (query, params).
+            # We will insert one by one for safety or use bulk insert syntax.
+            
+            # Bulk insert syntax construction
+            values_str_list = []
+            all_params = []
+            
+            for row in cleaned_batch:
+                values_str_list.append(f"({placeholders})")
+                for k in keys:
+                    val = row.get(k)
+                    # Simple handling for empty strings that should be NULL?
+                    if val == '':
+                        val = None
+                    all_params.append(val)
+            
+            full_query = f"INSERT INTO `{table_name}` ({columns_str}) VALUES " + ", ".join(values_str_list)
+            
+            self.connector.execute_query(full_query, tuple(all_params))
+            total_inserted += len(cleaned_batch)
+            
+        return total_inserted

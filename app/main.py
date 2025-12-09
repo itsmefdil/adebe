@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from .auth import authenticate_user
 from .database import get_db, ConnectionManager, ActivityLogManager
 from .dependencies import templates, get_current_user
-from .api import databases, mysql, postgresql, mongodb, sqlite, elasticsearch
+from .api import databases, mysql, postgresql, mongodb, sqlite, elasticsearch, backups
 from .exceptions import global_exception_handler, not_found_handler
 import os
 from dotenv import load_dotenv
@@ -30,6 +30,7 @@ app.include_router(elasticsearch.router)
 app.include_router(postgresql.router)
 app.include_router(mongodb.router)
 app.include_router(sqlite.router)
+app.include_router(backups.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):

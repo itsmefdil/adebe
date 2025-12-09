@@ -13,3 +13,4 @@ app/data/app.db.env
 .vscode/launch.json
 app/data/app.db
 app.db
+app/data/backups

@@ -18,6 +18,15 @@
             <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ database.name }} - MySQL</h2>
         </div>
         <div class="flex items-center gap-3">
+            <button onclick="openBackupModal()"
+                class="px-4 py-2 bg-white dark:bg-dark-surface border border-slate-300 dark:border-dark-border text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors flex items-center gap-2 shadow-sm">
+                <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2">
+                    </path>
+                </svg>
+                Backups
+            </button>
             <button onclick="openQueryModal()"
                 class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -213,6 +222,7 @@
     </div>
 </main>
 
+{% include "databases/mysql/backup_modal.html" %}
 {% include "databases/mysql/query_modal.html" %}
 {% include "components/delete_modal.html" %}
 

@@ -1,0 +1,256 @@
+<!-- Import/Export Modal -->
+<div id="ioModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeIoModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-xl bg-white dark:bg-dark-surface text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-200 dark:border-dark-border">
+
+                <!-- Header -->
+                <div
+                    class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-dark-bg">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="ioModalTitle">
+                        Table Operations
+                    </h3>
+                    <button onclick="closeIoModal()" class="text-slate-400 hover:text-slate-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 py-6 space-y-6">
+
+                    <!-- Content dynamic based on mode -->
+                    <div id="exportContent" class="hidden space-y-4">
+                        <p class="text-sm text-slate-600 dark:text-slate-400">Export data from table <strong
+                                class="text-slate-900 dark:text-slate-200">{{ table_name }}</strong>.</p>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Format</label>
+                            <select id="exportFormat"
+                                class="block w-full rounded-lg border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-sm">
+                                <option value="csv">CSV (Comma Separated)</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded text-xs text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800/30">
+                            Export will be processed in the background. You can download the file from the Backups/Files
+                            manager once complete.
+                        </div>
+                    </div>
+
+                    <div id="importContent" class="hidden space-y-4">
+                        <p class="text-sm text-slate-600 dark:text-slate-400">Import data into table <strong
+                                class="text-slate-900 dark:text-slate-200">{{ table_name }}</strong>.</p>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">File</label>
+                            <input type="file" id="importFile"
+                                class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-blue-600 dark:file:bg-blue-600 dark:hover:file:bg-blue-500" />
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Format</label>
+                            <select id="importFormat"
+                                class="block w-full rounded-lg border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-sm">
+                                <option value="csv">CSV (Comma Separated)</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+
+                        <div
+                            class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded text-xs text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-800/30">
+                            Ensure the file columns match the table structure. Large files will be processed in the
+                            background.
+                        </div>
+                    </div>
+
+                    <!-- Task Status -->
+                    <div id="ioTaskStatusArea"
+                        class="hidden p-4 rounded-lg bg-slate-50 dark:bg-dark-hover border border-slate-200 dark:border-dark-border">
+                        <div class="flex items-center gap-3">
+                            <div id="ioTaskStatusIcon"
+                                class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full">
+                            </div>
+                            <div class="flex-1">
+                                <p id="ioTaskStatusText" class="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    Processing...</p>
+                                <p id="ioTaskStatusDetail" class="text-xs text-slate-500">Checking status...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div
+                    class="px-6 py-4 border-t border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg flex justify-end gap-3">
+                    <button type="button" onclick="closeIoModal()"
+                        class="px-4 py-2 bg-white dark:bg-dark-surface border border-slate-300 dark:border-dark-border text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors shadow-sm">
+                        Cancel
+                    </button>
+                    <button id="ioActionBtn" type="button" onclick="submitIoAction()"
+                        class="px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const ioDbId = {{ database.id }};
+    const ioTableName = "{{ table_name }}";
+    let ioPollInterval = null;
+    let currentIoMode = null; // 'export' or 'import'
+
+    function openExportModal() {
+        currentIoMode = 'export';
+        document.getElementById('ioModal').classList.remove('hidden');
+        document.getElementById('ioModalTitle').innerText = 'Export Table';
+        document.getElementById('exportContent').classList.remove('hidden');
+        document.getElementById('importContent').classList.add('hidden');
+        document.getElementById('ioActionBtn').innerText = 'Start Export';
+        document.getElementById('ioTaskStatusArea').classList.add('hidden');
+    }
+
+    function openImportModal() {
+        currentIoMode = 'import';
+        document.getElementById('ioModal').classList.remove('hidden');
+        document.getElementById('ioModalTitle').innerText = 'Import Table';
+        document.getElementById('exportContent').classList.add('hidden');
+        document.getElementById('importContent').classList.remove('hidden');
+        document.getElementById('ioActionBtn').innerText = 'Start Import';
+        document.getElementById('ioTaskStatusArea').classList.add('hidden');
+    }
+
+    function closeIoModal() {
+        document.getElementById('ioModal').classList.add('hidden');
+        if (ioPollInterval) clearInterval(ioPollInterval);
+    }
+
+    async function submitIoAction() {
+        const btn = document.getElementById('ioActionBtn');
+        btn.disabled = true;
+
+        try {
+            if (currentIoMode === 'export') {
+                const format = document.getElementById('exportFormat').value;
+                const formData = new FormData();
+                formData.append('format', format);
+
+                // POST /backups/database/{db_id}/tables/{table_name}/export
+                const response = await fetch(`/backups/database/${ioDbId}/tables/${ioTableName}/export`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.task_id) {
+                    startIoPolling(data.task_id, 'Exporting data...');
+                } else {
+                    alert('Failed to start export: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                }
+
+            } else if (currentIoMode === 'import') {
+                const fileInput = document.getElementById('importFile');
+                const format = document.getElementById('importFormat').value;
+
+                if (fileInput.files.length === 0) {
+                    alert('Please select a file');
+                    btn.disabled = false;
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('format', format);
+
+                const response = await fetch(`/backups/database/${ioDbId}/tables/${ioTableName}/import`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.task_id) {
+                    startIoPolling(data.task_id, 'Importing data...');
+                } else {
+                    alert('Failed to start import: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                }
+            }
+        } catch (e) {
+            alert('Error: ' + e.message);
+            btn.disabled = false;
+        }
+    }
+
+    function startIoPolling(taskId, actionName) {
+        const statusArea = document.getElementById('ioTaskStatusArea');
+        const statusText = document.getElementById('ioTaskStatusText');
+        const statusDetail = document.getElementById('ioTaskStatusDetail');
+        const statusIcon = document.getElementById('ioTaskStatusIcon');
+
+        statusArea.classList.remove('hidden');
+        statusText.innerText = actionName;
+        statusDetail.innerText = "Queued";
+
+        if (ioPollInterval) clearInterval(ioPollInterval);
+
+        ioPollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/backups/tasks/${taskId}`);
+                const data = await res.json();
+
+                statusDetail.innerText = `Status: ${data.status}`;
+
+                if (data.status === 'SUCCESS') {
+                    clearInterval(ioPollInterval);
+                    statusIcon.className = "w-4 h-4 text-green-500";
+                    statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+
+                    if (currentIoMode === 'export') {
+                        statusText.innerText = "Export Ready";
+                        statusDetail.innerHTML = `File: <b>${data.result.filename}</b> <span class="text-xs ml-1">(Saved in Storage)</span>`;
+                    } else {
+                        statusText.innerText = "Import Complete";
+                        statusDetail.innerText = `${data.result.rows_affected} rows inserted.`;
+                    }
+
+                    document.getElementById('ioActionBtn').disabled = false;
+                    document.getElementById('ioActionBtn').innerText = "Close";
+                    document.getElementById('ioActionBtn').onclick = closeIoModal;
+
+                    if (currentIoMode === 'import') {
+                        // Reload page after short delay to see new data
+                        setTimeout(() => window.location.reload(), 2000);
+                    }
+
+                } else if (data.status === 'FAILURE') {
+                    clearInterval(ioPollInterval);
+                    statusIcon.className = "w-4 h-4 text-red-500";
+                    statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                    statusText.innerText = "Task Failed";
+                    statusDetail.innerText = data.result ? (data.result.message || JSON.stringify(data.result)) : "Unknown error";
+
+                    document.getElementById('ioActionBtn').disabled = false;
+                    document.getElementById('ioActionBtn').innerText = "Retry";
+                    document.getElementById('ioActionBtn').onclick = submitIoAction;
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 1000);
+    }
+</script>

@@ -1,0 +1,228 @@
+<!-- Backup Management Modal -->
+<div id="backupModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeBackupModal()"></div>
+
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-xl bg-white dark:bg-dark-surface text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-200 dark:border-dark-border">
+                
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-dark-bg">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="modal-title">
+                        Backup & Restore
+                    </h3>
+                    <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-500 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="px-6 py-6 space-y-6">
+                    
+                    <!-- Create Backup Section -->
+                    <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-100 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                        <div>
+                            <h4 class="font-medium">Create New Backup</h4>
+                            <p class="text-sm opacity-80 mt-1">Generate a full backup of the current database.</p>
+                        </div>
+                        <button onclick="triggerBackup()" id="createBackupBtn"
+                            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-sm">
+                            <span id="backupSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span>Create Backup</span>
+                        </button>
+                    </div>
+
+                    <!-- Backup List -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-medium text-slate-900 dark:text-slate-200">Available Backups</h4>
+                            <button onclick="refreshBackups()" class="text-sm text-primary hover:text-blue-700 font-medium flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="border border-slate-200 dark:border-dark-border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 dark:bg-dark-hover text-xs uppercase text-slate-500 font-semibold sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3">Filename</th>
+                                        <th class="px-4 py-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="backupList" class="divide-y divide-slate-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                                    <tr>
+                                        <td colspan="2" class="px-4 py-4 text-center text-slate-500 text-xs">Loading backups...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Task Status -->
+                    <div id="taskStatusArea" class="hidden p-4 rounded-lg bg-slate-50 dark:bg-dark-hover border border-slate-200 dark:border-dark-border">
+                         <div class="flex items-center gap-3">
+                             <div id="taskStatusIcon" class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                             <div class="flex-1">
+                                 <p id="taskStatusText" class="text-sm font-medium text-slate-800 dark:text-slate-200">Processing...</p>
+                                 <p id="taskStatusDetail" class="text-xs text-slate-500">Checking status...</p>
+                             </div>
+                         </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="px-6 py-4 border-t border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg flex justify-end">
+                    <button type="button" onclick="closeBackupModal()"
+                        class="px-4 py-2 bg-white dark:bg-dark-surface border border-slate-300 dark:border-dark-border text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors shadow-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dbId = {{ database.id }};
+    let pollInterval = null;
+
+    function openBackupModal() {
+        document.getElementById('backupModal').classList.remove('hidden');
+        refreshBackups();
+    }
+
+    function closeBackupModal() {
+        document.getElementById('backupModal').classList.add('hidden');
+        if (pollInterval) clearInterval(pollInterval);
+    }
+
+    async function refreshBackups() {
+        const listBody = document.getElementById('backupList');
+        try {
+            const response = await fetch(`/backups/database/${dbId}/list`);
+            const data = await response.json();
+            
+            if (data.files && data.files.length > 0) {
+                listBody.innerHTML = data.files.map(file => `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                        <td class="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-400">${file}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="triggerRestore('${file}')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
+                                Restore
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                listBody.innerHTML = `<tr><td colspan="2" class="px-4 py-4 text-center text-slate-500 text-xs text-italic">No backups found</td></tr>`;
+            }
+        } catch (e) {
+            listBody.innerHTML = `<tr><td colspan="2" class="px-4 py-4 text-center text-red-500 text-xs">Error loading backups</td></tr>`;
+        }
+    }
+
+    async function triggerBackup() {
+        if (!confirm("Are you sure you want to create a new backup?")) return;
+        
+        const btn = document.getElementById('createBackupBtn');
+        const spinner = document.getElementById('backupSpinner');
+        
+        btn.disabled = true;
+        spinner.classList.remove('hidden');
+        
+        try {
+            const response = await fetch(`/backups/database/${dbId}/backup`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.task_id) {
+                startPolling(data.task_id, 'Creating backup...');
+            } else {
+                alert("Failed to start backup task");
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+            btn.disabled = false;
+            spinner.classList.add('hidden');
+        }
+    }
+
+    async function triggerRestore(filename) {
+        if (!confirm(`WARNING: This will overwrite the current database with "${filename}".\n\nAre you sure you want to proceed?`)) return;
+        
+        try {
+            const formData = new FormData();
+            formData.append('filename', filename);
+            
+            const response = await fetch(`/backups/database/${dbId}/restore`, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            
+            if (data.task_id) {
+                startPolling(data.task_id, 'Restoring database...');
+            } else {
+                alert("Failed to start restore task");
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    function startPolling(taskId, actionName) {
+        const statusArea = document.getElementById('taskStatusArea');
+        const statusText = document.getElementById('taskStatusText');
+        const statusDetail = document.getElementById('taskStatusDetail');
+        const statusIcon = document.getElementById('taskStatusIcon');
+        
+        statusArea.classList.remove('hidden');
+        statusText.innerText = actionName;
+        statusDetail.innerText = "Queued";
+        
+        if (pollInterval) clearInterval(pollInterval);
+        
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/backups/tasks/${taskId}`);
+                const data = await res.json();
+                
+                statusDetail.innerText = `Status: ${data.status}`;
+                
+                if (data.status === 'SUCCESS') {
+                    clearInterval(pollInterval);
+                    statusIcon.className = "w-4 h-4 text-green-500";
+                    statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                    statusText.innerText = "Completed Successfully";
+                    
+                    // Re-enable backup button if it was backup
+                    document.getElementById('createBackupBtn').disabled = false;
+                    document.getElementById('backupSpinner').classList.add('hidden');
+                    
+                    refreshBackups();
+                    
+                    // Hide after 3 seconds
+                    setTimeout(() => statusArea.classList.add('hidden'), 5000);
+                    
+                } else if (data.status === 'FAILURE') {
+                    clearInterval(pollInterval);
+                    statusIcon.className = "w-4 h-4 text-red-500";
+                    statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+                    statusText.innerText = "Task Failed";
+                    statusDetail.innerText = data.result ? (data.result.message || JSON.stringify(data.result)) : "Unknown error";
+                    
+                    document.getElementById('createBackupBtn').disabled = false;
+                    document.getElementById('backupSpinner').classList.add('hidden');
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 1000);
+    }
+</script>
