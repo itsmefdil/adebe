@@ -3,7 +3,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.dependencies import templates, get_current_user
 from app.database import get_db, ConnectionManager
-from app.utils.security import decrypt_password
+from app.services.sqlite_service import SQLiteService
+from pydantic import BaseModel
+import json
 
 router = APIRouter(prefix="/databases", tags=["sqlite"])
 
@@ -19,30 +21,19 @@ async def sqlite_dashboard(request: Request, id: int, db: Session = Depends(get_
     if not database:
         return RedirectResponse(url="/databases")
         
-    connection_details = {
-        "host": database.host,
-        "database_name": database.database_name,
-        "username": database.username,
-        "password": decrypt_password(database.password)
-    }
+    service = SQLiteService(database)
+    stats = service.get_dashboard_stats()
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector(connection_details)
-    
-    try:
-        file_info = connector.get_file_info()
-        tables = connector.get_tables()
-        pragma = connector.get_pragma_settings()
-    except Exception as e:
-        return HTMLResponse(f"Error connecting to database: {str(e)}")
-        
+    if "error" in stats:
+        return HTMLResponse(f"Error connecting to database: {stats['error']}")
+
     return templates.TemplateResponse("databases/sqlite/dashboard.html", {
         "request": request, 
         "user": user,
         "database": database,
-        "file_info": file_info,
-        "tables": tables,
-        "pragma": pragma
+        "file_info": stats.get("file_info"),
+        "tables": stats.get("tables"),
+        "pragma": stats.get("pragma")
     })
 
 @router.get("/sqlite/table/{table_name}", response_class=HTMLResponse)
@@ -56,19 +47,10 @@ async def view_table(request: Request, table_name: str, id: int, page: int = 1, 
     
     if not database:
          return HTMLResponse("Database not found")
-         
-    connection_details = {
-        "host": database.host,
-        "database_name": database.database_name,
-    }
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector(connection_details)
-    
+    service = SQLiteService(database)
     limit = 50
-    offset = (page - 1) * limit
-    
-    data = connector.get_table_data(table_name, limit, offset)
+    data = service.browse_table(table_name, page, limit)
     
     return templates.TemplateResponse("databases/sqlite/browse.html", {
         "request": request,
@@ -89,10 +71,8 @@ async def delete_row(request: Request, table_name: str, row_id: int, id: int, db
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    success = connector.delete_row(table_name, row_id)
+    service = SQLiteService(database)
+    success = service.delete_row(table_name, row_id)
     
     if success:
         return HTMLResponse("")
@@ -108,10 +88,8 @@ async def add_row(request: Request, table_name: str, id: int, db: Session = Depe
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    columns = connector.get_table_info(table_name)
+    service = SQLiteService(database)
+    columns = service.get_table_info(table_name)
     
     return templates.TemplateResponse("databases/sqlite/form.html", {
         "request": request,
@@ -134,15 +112,13 @@ async def add_row_post(request: Request, table_name: str, id: int, db: Session =
     form_data = await request.form()
     data = dict(form_data)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    success, msg = connector.insert_row(table_name, data)
+    service = SQLiteService(database)
+    success, msg = service.insert_row(table_name, data)
     
     if success:
         return RedirectResponse(url=f"/databases/sqlite/table/{table_name}?id={id}", status_code=303)
     else:
-        columns = connector.get_table_info(table_name)
+        columns = service.get_table_info(table_name)
         return templates.TemplateResponse("databases/sqlite/form.html", {
             "request": request,
             "user": user,
@@ -163,11 +139,9 @@ async def edit_row(request: Request, table_name: str, row_id: int, id: int, db: 
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    columns = connector.get_table_info(table_name)
-    row_data = connector.get_row(table_name, row_id)
+    service = SQLiteService(database)
+    columns = service.get_table_info(table_name)
+    row_data = service.get_row(table_name, row_id)
     
     if not row_data:
         return RedirectResponse(url=f"/databases/sqlite/table/{table_name}?id={id}")
@@ -195,15 +169,13 @@ async def edit_row_post(request: Request, table_name: str, row_id: int, id: int,
     form_data = await request.form()
     data = dict(form_data)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    success, msg = connector.update_row(table_name, row_id, data)
+    service = SQLiteService(database)
+    success, msg = service.update_row(table_name, row_id, data)
     
     if success:
         return RedirectResponse(url=f"/databases/sqlite/table/{table_name}?id={id}", status_code=303)
     else:
-        columns = connector.get_table_info(table_name)
+        columns = service.get_table_info(table_name)
         return templates.TemplateResponse("databases/sqlite/form.html", {
             "request": request,
             "user": user,
@@ -215,6 +187,7 @@ async def edit_row_post(request: Request, table_name: str, row_id: int, id: int,
             "error": msg,
             "form_data": data
         })
+
 @router.get("/sqlite/create-table", response_class=HTMLResponse)
 async def create_table(request: Request, id: int, db: Session = Depends(get_db)):
     user = get_current_user(request)
@@ -241,8 +214,6 @@ async def create_table_post(request: Request, id: int, db: Session = Depends(get
     
     form_data = await request.form()
     
-    # Check for schema_json which contains the structured column data
-    import json
     schema_json = form_data.get("schema_json")
     table_name = form_data.get("table_name")
     
@@ -263,11 +234,9 @@ async def create_table_post(request: Request, id: int, db: Session = Depends(get
             "database": database,
             "error": "Invalid column data"
         })
-        
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
     
-    success, msg = connector.create_table(table_name, columns)
+    service = SQLiteService(database)
+    success, msg = service.create_table(table_name, columns)
     
     if success:
         return RedirectResponse(url=f"/databases/sqlite?id={id}", status_code=303)
@@ -288,10 +257,8 @@ async def view_structure(request: Request, table_name: str, id: int, db: Session
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    columns = connector.get_table_info(table_name)
+    service = SQLiteService(database)
+    columns = service.get_table_info(table_name)
     
     return templates.TemplateResponse("databases/sqlite/structure.html", {
         "request": request,
@@ -316,8 +283,6 @@ async def view_query(request: Request, id: int, db: Session = Depends(get_db)):
         "database": database
     })
 
-from pydantic import BaseModel
-
 class QueryRequest(BaseModel):
     query: str
 
@@ -330,10 +295,8 @@ async def run_query(request: Request, id: int, query_req: QueryRequest, db: Sess
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    result = connector.execute_query(query_req.query)
+    service = SQLiteService(database)
+    result = service.execute_query(query_req.query)
     
     if isinstance(result, dict) and "error" in result:
         return {"success": False, "error": result["error"]}
@@ -359,9 +322,7 @@ async def drop_table(request: Request, id: int, table_name: str, db: Session = D
     manager = ConnectionManager(db)
     database = manager.get_connection(id)
     
-    from app.connectors.sqlite_connector import SQLiteConnector
-    connector = SQLiteConnector({"host": database.host})
-    
-    success, msg = connector.drop_table(table_name)
+    service = SQLiteService(database)
+    success, msg = service.drop_table(table_name)
     
     return {"success": success, "error": msg if not success else None}
