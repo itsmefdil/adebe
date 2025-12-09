@@ -221,6 +221,20 @@ class MongoService:
             
         return collection.delete_one(filter_query)
 
+    def delete_documents(self, collection_name: str, doc_ids: list[str]):
+        collection = self.db[collection_name]
+        try:
+            # Try to convert all to ObjectId
+            object_ids = [ObjectId(doc_id) for doc_id in doc_ids]
+            # Match both ObjectId and string versions to be safe (or just ObjectId if that's standard)
+            # A safer approach is to include both in the $in query to catch string-stored ObjectIds too
+            filter_query = {"_id": {"$in": object_ids + doc_ids}}
+        except Exception:
+            # Fallback for non-ObjectId _id
+            filter_query = {"_id": {"$in": doc_ids}}
+            
+        return collection.delete_many(filter_query)
+
     def create_collection(self, collection_name: str):
         return self.db.create_collection(collection_name)
 

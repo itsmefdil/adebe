@@ -246,6 +246,35 @@ async def mongodb_delete_document(request: Request, db_id: int, collection_name:
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@router.post("/{db_id}/mongodb/collections/{collection_name}/documents/bulk-delete")
+async def mongodb_bulk_delete_documents(request: Request, db_id: int, collection_name: str, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return {"error": "Invalid database type"}
+        
+    try:
+        body = await request.json()
+        doc_ids = body.get("doc_ids", [])
+        
+        if not doc_ids:
+            return {"success": False, "error": "No document IDs provided"}
+            
+        service = MongoService(database)
+        result = service.delete_documents(collection_name, doc_ids)
+        
+        return {
+            "success": True, 
+            "deleted_count": result.deleted_count
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @router.get("/{db_id}/mongodb/create-collection", response_class=HTMLResponse)
 async def mongodb_create_collection_page(request: Request, db_id: int, db: Session = Depends(get_db)):
     user = get_current_user(request)
