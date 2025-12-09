@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/postgresql" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,11 +15,11 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{{ schema }}.{{ table_name }}</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ schema }}.{{ table_name }}</h2>
         </div>
         <div class="flex items-center gap-3">
             <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/structure"
-                class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 Structure
             </a>
             <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/insert"
@@ -30,16 +31,17 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <!-- Search and Filters -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border p-4 transition-colors">
             <form method="GET" class="flex flex-wrap items-center gap-4">
                 <div class="flex-1 min-w-[200px]">
                     <input type="text" name="search" value="{{ search or '' }}" placeholder="Search in all columns..."
-                        class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                 </div>
                 <div class="flex items-center gap-2">
-                    <label class="text-sm text-slate-600">Rows per page:</label>
+                    <label class="text-sm text-slate-600 dark:text-slate-400">Rows per page:</label>
                     <select name="limit"
-                        class="px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        class="px-3 py-2 border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                         <option value="10" {% if per_page==10 %}selected{% endif %}>10</option>
                         <option value="25" {% if per_page==25 %}selected{% endif %}>25</option>
                         <option value="50" {% if per_page==50 %}selected{% endif %}>50</option>
@@ -52,7 +54,7 @@
                 </button>
                 {% if search %}
                 <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/browse"
-                    class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                    class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                     Clear
                 </a>
                 {% endif %}
@@ -66,15 +68,17 @@
         {% endif %}
 
         <!-- Data Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             {% for col in columns %}
                             <th class="px-6 py-4 whitespace-nowrap">
                                 <a href="?sort_by={{ col }}&sort_order={% if sort_by == col and sort_order == 'ASC' %}DESC{% else %}ASC{% endif %}&search={{ search or '' }}&limit={{ per_page }}"
-                                    class="flex items-center gap-1 hover:text-slate-700">
+                                    class="flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-300">
                                     {{ col }}
                                     {% if col == primary_key %}
                                     <span class="text-yellow-500" title="Primary Key">🔑</span>
@@ -88,15 +92,15 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for row in rows %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
                             {% for col in columns %}
                             <td class="px-6 py-4 max-w-xs truncate" title="{{ row[col] }}">
                                 {% if row[col] is none %}
                                 <span class="text-slate-400 italic">NULL</span>
                                 {% else %}
-                                {{ row[col] }}
+                                <span class="text-slate-700 dark:text-slate-300">{{ row[col] }}</span>
                                 {% endif %}
                             </td>
                             {% endfor %}
@@ -122,9 +126,11 @@
                             </td>
                         </tr>
                         {% endfor %}
+
                         {% if not rows %}
                         <tr>
-                            <td colspan="{{ columns|length + 1 }}" class="px-6 py-8 text-center text-slate-500">
+                            <td colspan="{{ columns|length + 1 }}"
+                                class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                                 {% if search %}
                                 No results found for "{{ search }}"
                                 {% else %}
@@ -139,25 +145,26 @@
 
             <!-- Pagination -->
             {% if total_rows > 0 %}
-            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
-                <div class="text-sm text-slate-500">
+            <div
+                class="px-6 py-4 border-t border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-surface/50 flex items-center justify-between transition-colors">
+                <div class="text-sm text-slate-500 dark:text-slate-400">
                     Showing {{ start_index }} to {{ end_index }} of {{ total_rows }} rows
                 </div>
                 <div class="flex items-center gap-2">
                     {% if current_page > 1 %}
                     <a href="?page={{ current_page - 1 }}&limit={{ per_page }}&search={{ search or '' }}&sort_by={{ sort_by or '' }}&sort_order={{ sort_order }}"
-                        class="px-3 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors">
+                        class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Previous
                     </a>
                     {% endif %}
 
-                    <span class="px-3 py-1 text-sm text-slate-600">
+                    <span class="px-3 py-1 text-sm text-slate-600 dark:text-slate-400">
                         Page {{ current_page }} of {{ total_pages }}
                     </span>
 
                     {% if current_page < total_pages %} <a
                         href="?page={{ current_page + 1 }}&limit={{ per_page }}&search={{ search or '' }}&sort_by={{ sort_by or '' }}&sort_order={{ sort_order }}"
-                        class="px-3 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 transition-colors">
+                        class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Next
                         </a>
                         {% endif %}
@@ -195,4 +202,5 @@
         );
     }
 </script>
+
 {% endblock %}

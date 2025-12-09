@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/elasticsearch" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,10 +15,10 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{{ index_name }}</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ index_name }}</h2>
         </div>
         <div class="flex items-center gap-3">
-            <span class="text-sm text-slate-500">
+            <span class="text-sm text-slate-500 dark:text-slate-400">
                 {% if index_info %}
                 {{ index_info['docs.count'] }} docs • {{ index_info['store.size'] }}
                 {% endif %}
@@ -27,23 +28,24 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-6">
         <!-- Tabs -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200">
-            <div class="border-b border-slate-200">
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+            <div class="border-b border-slate-200 dark:border-dark-border">
                 <nav class="flex gap-4 px-6">
                     <button onclick="showTab('overview')" id="tab-overview"
-                        class="tab-button py-4 px-2 border-b-2 border-primary text-primary font-medium">
+                        class="tab-button py-4 px-2 border-b-2 border-primary text-primary font-medium transition-colors">
                         Overview
                     </button>
                     <button onclick="showTab('mappings')" id="tab-mappings"
-                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                         Mappings
                     </button>
                     <button onclick="showTab('settings')" id="tab-settings"
-                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                         Settings
                     </button>
                     <button onclick="showTab('documents')" id="tab-documents"
-                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700">
+                        class="tab-button py-4 px-2 border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                         Documents
                     </button>
                 </nav>
@@ -51,45 +53,47 @@
 
             <!-- Overview Tab -->
             <div id="content-overview" class="tab-content p-6">
-                <h3 class="text-lg font-bold text-slate-800 mb-4">Index Statistics</h3>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Index Statistics</h3>
                 {% if index_info %}
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Health</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Health</div>
                         <div
                             class="text-xl font-bold {% if index_info.health == 'green' %}text-green-600{% elif index_info.health == 'yellow' %}text-yellow-600{% else %}text-red-600{% endif %}">
                             {{ index_info.health|upper }}
                         </div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Status</div>
-                        <div class="text-xl font-bold text-slate-800">{{ index_info.status }}</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Status</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ index_info.status }}</div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Documents</div>
-                        <div class="text-xl font-bold text-slate-800">{{ index_info['docs.count'] }}</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Documents</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ index_info['docs.count'] }}
+                        </div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Size</div>
-                        <div class="text-xl font-bold text-slate-800">{{ index_info['store.size'] }}</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Size</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ index_info['store.size'] }}
+                        </div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Primaries</div>
-                        <div class="text-xl font-bold text-slate-800">{{ index_info.pri }}</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Primaries</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ index_info.pri }}</div>
                     </div>
-                    <div class="bg-slate-50 p-4 rounded-lg">
-                        <div class="text-sm text-slate-500 mb-1">Replicas</div>
-                        <div class="text-xl font-bold text-slate-800">{{ index_info.rep }}</div>
+                    <div class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg transition-colors">
+                        <div class="text-sm text-slate-500 dark:text-slate-400 mb-1">Replicas</div>
+                        <div class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ index_info.rep }}</div>
                     </div>
                 </div>
                 {% else %}
-                <p class="text-slate-500">No statistics available</p>
+                <p class="text-slate-500 dark:text-slate-400">No statistics available</p>
                 {% endif %}
             </div>
 
             <!-- Mappings Tab -->
             <div id="content-mappings" class="tab-content p-6 hidden">
-                <h3 class="text-lg font-bold text-slate-800 mb-4">Index Mappings</h3>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Index Mappings</h3>
                 <div class="bg-slate-900 text-slate-300 p-4 rounded-lg font-mono text-xs overflow-auto max-h-96">
                     <pre>{{ mappings|tojson(indent=2) if mappings else 'No mappings available' }}</pre>
                 </div>
@@ -97,7 +101,7 @@
 
             <!-- Settings Tab -->
             <div id="content-settings" class="tab-content p-6 hidden">
-                <h3 class="text-lg font-bold text-slate-800 mb-4">Index Settings</h3>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200 mb-4">Index Settings</h3>
                 <div class="bg-slate-900 text-slate-300 p-4 rounded-lg font-mono text-xs overflow-auto max-h-96">
                     <pre>{{ settings|tojson(indent=2) if settings else 'No settings available' }}</pre>
                 </div>
@@ -106,7 +110,7 @@
             <!-- Documents Tab -->
             <div id="content-documents" class="tab-content p-6 hidden">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-slate-800">Documents</h3>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Documents</h3>
                     <button onclick="showCreateDocModal()"
                         class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600">
                         + Create Document
@@ -117,8 +121,9 @@
                     hx-target="#search-results" hx-swap="innerHTML" class="mb-4">
                     <div class="flex gap-2">
                         <input type="text" name="query" placeholder="Search query (leave empty for all)"
-                            class="flex-1 px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary">
-                        <select name="size" class="px-4 py-2 border border-slate-300 rounded-lg outline-none">
+                            class="flex-1 px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-colors">
+                        <select name="size"
+                            class="px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg outline-none transition-colors">
                             <option value="10">10 results</option>
                             <option value="25">25 results</option>
                             <option value="50">50 results</option>
@@ -131,7 +136,7 @@
                     </div>
                 </form>
                 <div id="search-results" class="space-y-2">
-                    <div class="text-slate-500 text-sm">Click "Search" to view documents...</div>
+                    <div class="text-slate-500 dark:text-slate-400 text-sm">Click "Search" to view documents...</div>
                 </div>
             </div>
         </div>
@@ -139,11 +144,13 @@
 </main>
 
 <!-- Create/Edit Document Modal -->
-<div id="docModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-            <h3 id="docModalTitle" class="text-xl font-bold text-slate-800">Create Document</h3>
-            <button onclick="hideDocModal()" class="text-slate-400 hover:text-slate-600">
+<div id="docModal"
+    class="hidden fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity">
+    <div
+        class="bg-white dark:bg-dark-surface rounded-xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-dark-border transition-colors">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+            <h3 id="docModalTitle" class="text-xl font-bold text-slate-800 dark:text-slate-200">Create Document</h3>
+            <button onclick="hideDocModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                     </path>
@@ -153,21 +160,24 @@
         <form id="docForm">
             <div class="p-6 space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Document ID (Optional)</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Document ID
+                        (Optional)</label>
                     <input type="text" id="doc_id" name="doc_id"
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary"
+                        class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary transition-colors"
                         placeholder="Leave empty for auto-generated ID">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Document JSON *</label>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Document JSON
+                        *</label>
                     <textarea id="doc_body" name="doc_body" rows="15" required
-                        class="w-full px-4 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary font-mono text-xs"
+                        class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary font-mono text-xs transition-colors"
                         placeholder='{\n  "title": "Example",\n  "content": "Document content",\n  "timestamp": "2024-01-01T00:00:00Z"\n}'></textarea>
                 </div>
             </div>
-            <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-end gap-3">
+            <div
+                class="px-6 py-4 border-t border-slate-200 dark:border-dark-border flex items-center justify-end gap-3">
                 <button type="button" onclick="hideDocModal()"
-                    class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">
+                    class="px-4 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-slate-100 font-medium transition-colors">
                     Cancel
                 </button>
                 <button type="submit" class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600">
@@ -188,7 +198,7 @@
         // Remove active state from all buttons
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.classList.remove('border-primary', 'text-primary');
-            btn.classList.add('border-transparent', 'text-slate-500');
+            btn.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
         });
 
         // Show selected tab
@@ -196,7 +206,7 @@
 
         // Activate selected button
         const activeBtn = document.getElementById('tab-' + tabName);
-        activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        activeBtn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
         activeBtn.classList.add('border-primary', 'text-primary');
     }
 

@@ -5,12 +5,13 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-        <h2 class="text-2xl font-bold text-slate-800">Data Visualization</h2>
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Data Visualization</h2>
         <div class="flex items-center gap-3">
             <select id="databaseSelect" onchange="loadStats()"
-                class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                class="px-3 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
                 <option value="" disabled selected>Select Database</option>
                 {% for db in databases %}
                 <option value="{{ db.id }}" data-type="{{ db.type }}">{{ db.name }} ({{ db.type }})</option>
@@ -26,16 +27,18 @@
     <div class="flex-1 overflow-y-auto p-8">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <!-- Chart 1: Row Counts -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4">Table Row Counts</h3>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200 mb-4">Table Row Counts</h3>
                 <div class="h-64 relative">
                     <canvas id="rowsChart"></canvas>
                 </div>
             </div>
 
             <!-- Chart 2: Table Sizes -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="font-bold text-slate-800 mb-4">Table Sizes (MB)</h3>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200 mb-4">Table Sizes (MB)</h3>
                 <div class="h-64 relative">
                     <canvas id="sizeChart"></canvas>
                 </div>

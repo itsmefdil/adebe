@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +15,7 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{{ database.name }} - PostgreSQL</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ database.name }} - PostgreSQL</h2>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="openQueryModal()"
@@ -26,42 +27,49 @@
                 </svg>
                 Query Playground
             </button>
-            <span class="text-sm text-slate-500">{{ settings.get('server_version', 'Unknown') }}</span>
+            <span class="text-sm text-slate-500 dark:text-slate-400">{{ settings.get('server_version', 'Unknown')
+                }}</span>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
         <!-- Server Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Active Connections</h3>
-                <div class="text-3xl font-bold text-slate-800">{{ active_connections }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Active Connections</h3>
+                <div class="text-3xl font-bold text-slate-800 dark:text-slate-200">{{ active_connections }}</div>
                 <div class="text-xs text-slate-400 mt-1">Max: {{ max_connections }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Tables</h3>
-                <div class="text-3xl font-bold text-slate-800">{{ tables|length }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Tables</h3>
+                <div class="text-3xl font-bold text-slate-800 dark:text-slate-200">{{ tables|length }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Database Size</h3>
-                <div class="text-3xl font-bold text-slate-800">{{ database_size }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Database Size</h3>
+                <div class="text-3xl font-bold text-slate-800 dark:text-slate-200">{{ database_size }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h3 class="text-sm font-medium text-slate-500 mb-2">Shared Buffers</h3>
-                <div class="text-3xl font-bold text-slate-800">{{ settings.get('shared_buffers', 'N/A') }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <h3 class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Shared Buffers</h3>
+                <div class="text-3xl font-bold text-slate-800 dark:text-slate-200">{{ settings.get('shared_buffers',
+                    'N/A') }}</div>
             </div>
         </div>
 
         <!-- Database Schema -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 class="font-bold text-slate-800">Database Schema</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Database Schema</h3>
                 <div class="flex items-center gap-3">
                     <!-- Schema Filter -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-slate-500">Schema:</label>
+                        <label class="text-sm text-slate-500 dark:text-slate-400">Schema:</label>
                         <select id="schema-filter" onchange="filterTables()"
-                            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                            class="px-3 py-1.5 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                             <option value="">All Schemas</option>
                             {% set schemas = tables | map(attribute='schema') | unique | list %}
                             {% for schema in schemas %}
@@ -71,9 +79,9 @@
                     </div>
                     <!-- Owner Filter -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-slate-500">Owner:</label>
+                        <label class="text-sm text-slate-500 dark:text-slate-400">Owner:</label>
                         <select id="owner-filter" onchange="filterTables()"
-                            class="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                            class="px-3 py-1.5 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                             <option value="">All Owners</option>
                             {% set owners = tables | map(attribute='owner') | unique | list %}
                             {% for owner in owners %}
@@ -82,14 +90,15 @@
                         </select>
                     </div>
                     <a href="/databases/{{ database.id }}/postgresql/create-table"
-                        class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Create Table
                     </a>
                 </div>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Schema</th>
                             <th class="px-6 py-4">Table Name</th>
@@ -99,12 +108,12 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="tables-body" class="divide-y divide-slate-200">
+                    <tbody id="tables-body" class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for table in tables %}
-                        <tr class="hover:bg-slate-50 transition-colors table-row" data-schema="{{ table.schema }}"
-                            data-owner="{{ table.owner }}">
-                            <td class="px-6 py-4 text-slate-500">{{ table.schema }}</td>
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ table.name }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors table-row"
+                            data-schema="{{ table.schema }}" data-owner="{{ table.owner }}">
+                            <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ table.schema }}</td>
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ table.name }}</td>
                             <td class="px-6 py-4">{{ table.estimated_rows or 0 }}</td>
                             <td class="px-6 py-4">{{ table.size }}</td>
                             <td class="px-6 py-4">{{ table.owner }}</td>
@@ -113,7 +122,7 @@
                                     <a href="/databases/{{ database.id }}/postgresql/tables/{{ table.schema }}/{{ table.name }}/browse"
                                         class="text-primary hover:text-blue-700 font-medium">Browse</a>
                                     <a href="/databases/{{ database.id }}/postgresql/tables/{{ table.schema }}/{{ table.name }}/structure"
-                                        class="text-slate-400 hover:text-slate-600">Structure</a>
+                                        class="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300">Structure</a>
                                     <button onclick="dropTable('{{ table.schema }}', '{{ table.name }}')"
                                         class="text-red-400 hover:text-red-600" title="Drop Table">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,31 +137,36 @@
                         {% endfor %}
                         {% if not tables %}
                         <tr id="no-tables-row">
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No tables found</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No tables
+                                found</td>
                         </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
             <!-- Table count indicator -->
-            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 text-sm text-slate-500">
+            <div
+                class="px-6 py-3 bg-slate-50 dark:bg-dark-surface/50 border-t border-slate-200 dark:border-dark-border text-sm text-slate-500 dark:text-slate-400 transition-colors">
                 <span id="table-count">{{ tables|length }}</span> table(s) displayed
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Active Queries -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800">Active Queries</h3>
+            <div
+                class="lg:col-span-2 bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <div
+                    class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Active Queries</h3>
                     <button hx-get="/databases/{{ database.id }}/postgresql/activity" hx-target="#activity-body"
                         hx-swap="innerHTML" class="text-primary hover:text-blue-700 text-sm font-medium">
                         🔄 Refresh
                     </button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                        <thead
+                            class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                             <tr>
                                 <th class="px-6 py-4">PID</th>
                                 <th class="px-6 py-4">User</th>
@@ -161,16 +175,17 @@
                                 <th class="px-6 py-4">Query</th>
                             </tr>
                         </thead>
-                        <tbody id="activity-body" class="divide-y divide-slate-200">
+                        <tbody id="activity-body" class="divide-y divide-slate-200 dark:divide-dark-border">
                             {% for activity in activities %}
-                            <tr class="hover:bg-slate-50 transition-colors">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
                                 <td class="px-6 py-4 font-mono text-xs">{{ activity.pid }}</td>
                                 <td class="px-6 py-4">{{ activity.user or 'N/A' }}</td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                        {% if activity.state == 'active' %}bg-green-100 text-green-700
-                                        {% elif activity.state == 'idle' %}bg-blue-100 text-blue-700
-                                        {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                    <span
+                                        class="px-2 py-1 rounded-full text-xs font-medium 
+                                        {% if activity.state == 'active' %}bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400
+                                        {% elif activity.state == 'idle' %}bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400
+                                        {% else %}bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300{% endif %}">
                                         {{ activity.state or 'unknown' }}
                                     </span>
                                 </td>
@@ -181,7 +196,8 @@
                             {% endfor %}
                             {% if not activities %}
                             <tr>
-                                <td colspan="5" class="px-6 py-8 text-center text-slate-500">No active queries</td>
+                                <td colspan="5" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No
+                                    active queries</td>
                             </tr>
                             {% endif %}
                         </tbody>
@@ -190,42 +206,45 @@
             </div>
 
             <!-- Server Settings -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-800">Server Settings</h3>
+            <div
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Server Settings</h3>
                 </div>
                 <div class="p-0">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <tbody class="divide-y divide-slate-200">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                        <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">server_version</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">server_version</td>
                                 <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('server_version',
                                     'N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">data_directory</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">data_directory</td>
                                 <td class="px-6 py-3 font-mono text-xs text-right truncate max-w-xs"
                                     title="{{ settings.get('data_directory', 'N/A') }}">{{
                                     settings.get('data_directory', 'N/A')[:30] }}{% if settings.get('data_directory',
                                     '')|length > 30 %}...{% endif %}</td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">max_connections</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">max_connections
+                                </td>
                                 <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('max_connections',
                                     'N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">shared_buffers</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">shared_buffers</td>
                                 <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('shared_buffers',
                                     'N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">work_mem</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">work_mem</td>
                                 <td class="px-6 py-3 font-mono text-xs text-right">{{ settings.get('work_mem', 'N/A') }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="px-6 py-3 font-medium text-slate-700">effective_cache_size</td>
+                                <td class="px-6 py-3 font-medium text-slate-700 dark:text-slate-300">
+                                    effective_cache_size</td>
                                 <td class="px-6 py-3 font-mono text-xs text-right">{{
                                     settings.get('effective_cache_size', 'N/A') }}</td>
                             </tr>

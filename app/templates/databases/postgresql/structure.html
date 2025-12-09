@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/postgresql" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,11 +15,14 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{{ schema }}.{{ table_name }} - Structure</h2>
+            </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ schema }}.{{ table_name }} - Structure
+            </h2>
         </div>
         <div class="flex items-center gap-3">
             <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/browse"
-                class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                 Browse Data
             </a>
         </div>
@@ -32,13 +36,15 @@
         {% endif %}
 
         <!-- Columns -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 class="font-bold text-slate-800">Columns</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Columns</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Name</th>
                             <th class="px-6 py-4">Type</th>
@@ -48,17 +54,19 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for col in columns %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ col.name }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ col.name }}</td>
                             <td class="px-6 py-4 font-mono text-xs">{{ col.type }}</td>
                             <td class="px-6 py-4">{{ col.max_length or '-' }}</td>
                             <td class="px-6 py-4">
                                 {% if col.nullable == 'YES' %}
-                                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">Yes</span>
+                                <span
+                                    class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-xs">Yes</span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs">No</span>
+                                <span
+                                    class="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded text-xs">No</span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 font-mono text-xs">{{ col.default_value or '-' }}</td>
@@ -76,7 +84,8 @@
                         {% endfor %}
                         {% if not columns %}
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No columns found</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No columns
+                                found</td>
                         </tr>
                         {% endif %}
                     </tbody>
@@ -85,13 +94,15 @@
         </div>
 
         <!-- Indexes -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">Indexes</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Indexes</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Name</th>
                             <th class="px-6 py-4">Type</th>
@@ -101,23 +112,27 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for idx in indexes %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ idx.name }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ idx.name }}</td>
                             <td class="px-6 py-4">{{ idx.type }}</td>
                             <td class="px-6 py-4">
                                 {% if idx.unique == 'Yes' %}
-                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Yes</span>
+                                <span
+                                    class="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded text-xs">Yes</span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">No</span>
+                                <span
+                                    class="px-2 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded text-xs">No</span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4">
                                 {% if idx.primary == 'Yes' %}
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs">Yes</span>
+                                <span
+                                    class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs">Yes</span>
                                 {% else %}
-                                <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs">No</span>
+                                <span
+                                    class="px-2 py-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 rounded text-xs">No</span>
                                 {% endif %}
                             </td>
                             <td class="px-6 py-4 font-mono text-xs">{{ idx.columns }}</td>
@@ -137,7 +152,8 @@
                         {% endfor %}
                         {% if not indexes %}
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No indexes found</td>
+                            <td colspan="6" class="px-6 py-8 text-center text-slate-500 dark:text-slate-400">No indexes
+                                found</td>
                         </tr>
                         {% endif %}
                     </tbody>
@@ -147,23 +163,25 @@
 
         <!-- Constraints -->
         {% if constraints %}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">Constraints</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Constraints</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Name</th>
                             <th class="px-6 py-4">Type</th>
                             <th class="px-6 py-4">Definition</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for con in constraints %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ con.name }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ con.name }}</td>
                             <td class="px-6 py-4">
                                 {% if con.type == 'p' %}PRIMARY KEY
                                 {% elif con.type == 'u' %}UNIQUE

@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/browse"
                 class="text-slate-400 hover:text-slate-600">
@@ -15,107 +16,123 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">
                 {% if is_edit %}Edit Row{% else %}Insert Row{% endif %} - {{ schema }}.{{ table_name }}
             </h2>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="max-w-2xl mx-auto">
+        <div class="max-w-3xl mx-auto">
             {% if error %}
             <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
                 {{ error }}
             </div>
             {% endif %}
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-800">
-                        {% if is_edit %}Edit Row{% else %}New Row{% endif %}
-                    </h3>
-                </div>
-                <form method="POST" class="p-6 space-y-4">
-                    {% for col in columns %}
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <label for="{{ col.name }}" class="block text-sm font-medium text-slate-700">
-                                {{ col.name }}
-                                <span class="text-xs text-slate-400 font-normal ml-2">{{ col.type }}{% if col.max_length
-                                    %}({{ col.max_length }}){% endif %}</span>
-                            </label>
-                            {% if col.nullable == 'YES' %}
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="{{ col.name }}_null" name="{{ col.name }}_null"
-                                    class="rounded border-slate-300 text-primary focus:ring-primary" {% if row and
-                                    row[col.name] is none %}checked{% endif %}>
-                                <label for="{{ col.name }}_null" class="text-xs text-slate-500">NULL</label>
+            <div
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <form method="POST" action="">
+                    <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-200">
+                            {% if is_edit %}Edit Row{% else %}New Row{% endif %}
+                        </h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        {% for col in columns %}
+                        <div class="space-y-2">
+                            <div class="space-y-1">
+                                <label for="col_{{ col.name }}"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                    {{ col.name }}
+                                    <span class="text-xs text-slate-400 font-normal">({{ col.type }})</span>
+                                    {% if col.primary_key %}<span class="text-yellow-500 text-xs ml-1">PK</span>{% endif
+                                    %}
+                                </label>
+                                {% if col.nullable == 'YES' %}
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="{{ col.name }}_null" name="{{ col.name }}_null"
+                                        class="rounded border-slate-300 text-primary focus:ring-primary" {% if row and
+                                        row[col.name] is none %}checked{% endif %}>
+                                    <label for="{{ col.name }}_null"
+                                        class="text-xs text-slate-500 dark:text-slate-400">NULL</label>
+                                </div>
+                                {% endif %}
                             </div>
+
+                            {% if col.type in ['text', 'json', 'jsonb', 'xml'] %}
+                            <textarea id="{{ col.name }}" name="{{ col.name }}" rows="3"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif
+                                %}>{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}</textarea>
+                            {% elif col.type == 'boolean' %}
+                            <select id="{{ col.name }}" name="{{ col.name }}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200">
+                                <option value="">-- Select --</option>
+                                <option value="true" {% if row and row[col.name]==True %}selected{% endif %}>true
+                                </option>
+                                <option value="false" {% if row and row[col.name]==False %}selected{% endif %}>false
+                                </option>
+                            </select>
+                            {% elif col.type in ['date'] %}
+                            <input type="date" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% elif col.type in ['timestamp without time zone', 'timestamp with time zone',
+                            'timestamptz']
+                            %}
+                            <input type="datetime-local" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% elif col.type in ['time', 'time without time zone', 'time with time zone'] %}
+                            <input type="time" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% elif col.type in ['integer', 'bigint', 'smallint', 'int4', 'int8', 'int2'] %}
+                            <input type="number" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% elif col.type in ['numeric', 'decimal', 'real', 'double precision', 'float4', 'float8']
+                            %}
+                            <input type="number" step="any" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% else %}
+                            <input type="text" id="{{ col.name }}" name="{{ col.name }}"
+                                value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary bg-white dark:bg-dark-input text-slate-700 dark:text-slate-200"
+                                {% if is_edit and col.name==pk_column %}readonly
+                                class="bg-slate-100 dark:bg-dark-surface-200" {% endif %}>
+                            {% endif %}
+
+                            {% if col.default_value %}
+                            <p class="text-xs text-slate-400">Default: {{ col.default_value }}</p>
                             {% endif %}
                         </div>
+                        {% endfor %}
 
-                        {% if col.type in ['text', 'json', 'jsonb', 'xml'] %}
-                        <textarea id="{{ col.name }}" name="{{ col.name }}" rows="3"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary font-mono text-sm"
-                            {% if is_edit and col.name==pk_column %}readonly class="bg-slate-100" {% endif
-                            %}>{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}</textarea>
-                        {% elif col.type == 'boolean' %}
-                        <select id="{{ col.name }}" name="{{ col.name }}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
-                            <option value="">-- Select --</option>
-                            <option value="true" {% if row and row[col.name]==True %}selected{% endif %}>true</option>
-                            <option value="false" {% if row and row[col.name]==False %}selected{% endif %}>false
-                            </option>
-                        </select>
-                        {% elif col.type in ['date'] %}
-                        <input type="date" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% elif col.type in ['timestamp without time zone', 'timestamp with time zone', 'timestamptz']
-                        %}
-                        <input type="datetime-local" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% elif col.type in ['time', 'time without time zone', 'time with time zone'] %}
-                        <input type="time" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% elif col.type in ['integer', 'bigint', 'smallint', 'int4', 'int8', 'int2'] %}
-                        <input type="number" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% elif col.type in ['numeric', 'decimal', 'real', 'double precision', 'float4', 'float8'] %}
-                        <input type="number" step="any" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% else %}
-                        <input type="text" id="{{ col.name }}" name="{{ col.name }}"
-                            value="{% if row and row[col.name] is not none %}{{ row[col.name] }}{% endif %}"
-                            class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-                            {% if is_edit and col.name==pk_column %}readonly{% endif %}>
-                        {% endif %}
-
-                        {% if col.default_value %}
-                        <p class="text-xs text-slate-400">Default: {{ col.default_value }}</p>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
-
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
-                        <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/browse"
-                            class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
-                            Cancel
-                        </a>
-                        <button type="submit"
-                            class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
-                            {% if is_edit %}Update{% else %}Insert{% endif %}
-                        </button>
-                    </div>
+                        <div
+                            class="px-6 py-4 bg-slate-50 dark:bg-dark-surface/50 border-t border-slate-200 dark:border-dark-border flex items-center justify-end gap-3 transition-colors">
+                            <a href="/databases/{{ database.id }}/postgresql/tables/{{ schema }}/{{ table_name }}/browse"
+                                class="px-4 py-2 bg-white dark:bg-dark-surface border border-slate-300 dark:border-dark-border text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                                Cancel
+                            </a>
+                            <button type="submit"
+                                class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                                {% if is_edit %}Update{% else %}Insert{% endif %}
+                            </button>
+                        </div>
                 </form>
             </div>
         </div>

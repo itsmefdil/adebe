@@ -5,12 +5,13 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-        <h2 class="text-2xl font-bold text-slate-800">Query Builder</h2>
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Query Builder</h2>
         <div class="flex items-center gap-3">
             <select id="databaseSelect"
-                class="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                class="px-3 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
                 <option value="" disabled selected>Select Database</option>
                 {% for db in databases %}
                 <option value="{{ db.id }}" data-type="{{ db.type }}">{{ db.name }} ({{ db.type }})</option>
@@ -32,22 +33,26 @@
 
     <div class="flex-1 overflow-y-auto p-8 flex flex-col gap-6">
         <!-- Editor -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-1/2">
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border flex flex-col h-1/2 transition-colors">
             <div
-                class="px-4 py-2 border-b border-slate-200 bg-slate-50 flex items-center gap-4 text-xs font-medium text-slate-500">
-                <button class="hover:text-slate-800">Format SQL</button>
-                <button class="hover:text-slate-800"
+                class="px-4 py-2 border-b border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg flex items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <button class="hover:text-slate-800 dark:hover:text-white transition-colors">Format SQL</button>
+                <button class="hover:text-slate-800 dark:hover:text-white transition-colors"
                     onclick="document.getElementById('queryInput').value = ''">Clear</button>
             </div>
-            <textarea id="queryInput" class="flex-1 p-4 font-mono text-sm outline-none resize-none" placeholder="-- Write your SQL query here...
+            <textarea id="queryInput"
+                class="flex-1 p-4 font-mono text-sm outline-none resize-none bg-white dark:bg-dark-surface text-slate-900 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-colors"
+                placeholder="-- Write your SQL query here...
 SELECT * FROM users WHERE active = true;"></textarea>
         </div>
 
         <!-- Results -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex-1 flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                <h3 class="font-bold text-slate-800">Results</h3>
-                <span id="queryStats" class="text-xs text-slate-500"></span>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border flex-1 flex flex-col overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Results</h3>
+                <span id="queryStats" class="text-xs text-slate-500 dark:text-slate-400"></span>
             </div>
             <div id="resultsContainer" class="flex-1 overflow-auto">
                 <div class="flex items-center justify-center h-full text-slate-400">
@@ -116,16 +121,16 @@ SELECT * FROM users WHERE active = true;"></textarea>
                     const columns = data.columns;
                     const rows = data.rows;
 
-                    let html = '<table class="w-full text-left text-sm text-slate-600"><thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500"><tr>';
+                    let html = '<table class="w-full text-left text-sm text-slate-600 dark:text-slate-400"><thead class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400"><tr>';
                     columns.forEach(col => {
                         html += `<th class="px-6 py-4 whitespace-nowrap">${col}</th>`;
                     });
-                    html += '</tr></thead><tbody class="divide-y divide-slate-200">';
+                    html += '</tr></thead><tbody class="divide-y divide-slate-200 dark:divide-dark-border">';
 
                     rows.forEach(row => {
-                        html += '<tr class="hover:bg-slate-50">';
+                        html += '<tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">';
                         columns.forEach(col => {
-                            html += `<td class="px-6 py-4 whitespace-nowrap max-w-xs truncate">${row[col] !== null ? row[col] : 'NULL'}</td>`;
+                            html += `<td class="px-6 py-4 whitespace-nowrap max-w-xs truncate text-slate-900 dark:text-slate-200">${row[col] !== null ? row[col] : '<span class="text-slate-400 italic">NULL</span>'}</td>`;
                         });
                         html += '</tr>';
                     });
@@ -134,11 +139,11 @@ SELECT * FROM users WHERE active = true;"></textarea>
                     resultsContainer.innerHTML = html;
                     queryStats.textContent = `${rows.length} rows in ${duration}ms`;
                 } else {
-                    resultsContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500">Query executed successfully. No rows returned.</div>';
+                    resultsContainer.innerHTML = '<div class="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">Query executed successfully. No rows returned.</div>';
                     queryStats.textContent = `0 rows in ${duration}ms`;
                 }
             } else {
-                resultsContainer.innerHTML = `<div class="p-6"><div class="bg-red-50 border border-red-200 rounded-lg p-4"><p class="text-sm text-red-800">Error: ${data.error || 'Unknown error'}</p></div></div>`;
+                resultsContainer.innerHTML = `<div class="p-6"><div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4"><p class="text-sm text-red-800 dark:text-red-400">Error: ${data.error || 'Unknown error'}</p></div></div>`;
                 queryStats.textContent = `Error in ${duration}ms`;
             }
         } catch (error) {

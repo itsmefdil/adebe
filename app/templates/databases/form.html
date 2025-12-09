@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +15,8 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{% if is_edit %}Edit Connection{% else %}New Connection{%
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{% if is_edit %}Edit Connection{% else
+                %}New Connection{%
                 endif %}</h2>
         </div>
     </header>
@@ -22,20 +24,24 @@
     <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-2xl mx-auto">
             <form action="{% if is_edit %}/databases/{{ database.id }}/edit{% else %}/databases/new{% endif %}"
-                method="post" class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">
+                method="post"
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border p-8 space-y-6 transition-colors">
+
 
                 <div class="grid grid-cols-2 gap-6">
                     <div class="col-span-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Connection Name</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Connection
+                            Name</label>
                         <input type="text" name="name" value="{{ database.name if database else '' }}" required
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="e.g. Production DB">
                     </div>
 
                     <div class="col-span-2">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Database Type</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Database
+                            Type</label>
                         <select name="type" id="type-select"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none">
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
                             <option value="PostgreSQL" {% if database and database.type=='PostgreSQL' %}selected{% endif
                                 %}>PostgreSQL</option>
                             <option value="MySQL" {% if database and database.type=='MySQL' %}selected{% endif %}>MySQL
@@ -50,49 +56,54 @@
                     </div>
 
                     <div class="col-span-2" id="field-host">
-                        <label class="block text-sm font-medium text-slate-700 mb-1" id="label-host">Host</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+                            id="label-host">Host</label>
                         <input type="text" name="host" value="{{ database.host if database else '' }}"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="localhost">
                     </div>
 
                     <div class="col-span-2" id="field-port">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Port</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Port</label>
                         <input type="number" name="port" value="{{ database.port if database else '' }}"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="5432">
                     </div>
 
                     <div class="col-span-2" id="field-database">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Database Name</label>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Database
+                            Name</label>
                         <input type="text" name="database_name"
                             value="{{ database.database_name if database and database.database_name else '' }}"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="my_database">
                     </div>
 
                     <div class="col-span-1" id="field-username">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+                        <label
+                            class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username</label>
                         <input type="text" name="username"
                             value="{{ database.username if database and database.username else '' }}"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="user">
                     </div>
 
                     <div class="col-span-1" id="field-password">
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Password{% if is_edit %} (leave
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password{% if
+                            is_edit %} (leave
                             empty to keep current){% endif %}</label>
                         <input type="password" name="password" value=""
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                            class="w-full px-4 py-2 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
                             placeholder="{% if is_edit %}Leave empty to keep current password{% else %}••••••••{% endif %}">
                     </div>
                 </div>
 
-                <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+                <div
+                    class="pt-6 border-t border-slate-100 dark:border-dark-border flex items-center justify-between transition-colors">
                     <div class="flex items-center gap-4">
                         <button type="button" hx-post="/databases/test" hx-target="#test-result"
                             hx-include="closest form" hx-indicator="#test-indicator"
-                            class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
+                            class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium border border-slate-300 dark:border-dark-border rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
                             Test Connection
                         </button>
                         <span id="test-indicator"
@@ -101,7 +112,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <a href="/databases"
-                            class="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium">Cancel</a>
+                            class="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium transition-colors">Cancel</a>
                         <button type="submit"
                             class="px-6 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
                             {% if is_edit %}Update{% else %}Save{% endif %} Connection

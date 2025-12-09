@@ -5,9 +5,10 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
-        <h2 class="text-2xl font-bold text-slate-800">Backup & Restore</h2>
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Backup & Restore</h2>
         <button
             class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,13 +20,15 @@
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">Backup History</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Backup History</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">
                         <tr>
                             <th class="px-6 py-4">Filename</th>
                             <th class="px-6 py-4">Database</th>
@@ -34,9 +37,10 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td
+                                class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -74,8 +78,9 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900 flex items-center gap-2">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td
+                                class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200 flex items-center gap-2">
                                 <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

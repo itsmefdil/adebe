@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/postgresql" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,37 +15,42 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">Create Table</h2>
+            </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Create Table</h2>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
         <div class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-800">New Table Definition</h3>
+            <div
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">New Table Definition</h3>
                 </div>
                 <div class="p-6 space-y-6">
                     <!-- Table Name -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-2">
-                            <label for="schema_name" class="block text-sm font-medium text-slate-700">Schema</label>
+                            <label for="schema_name"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">Schema</label>
                             <input type="text" id="schema_name" value="public"
-                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                         </div>
                         <div class="space-y-2">
-                            <label for="table_name" class="block text-sm font-medium text-slate-700">Table Name</label>
+                            <label for="table_name"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300">Table Name</label>
                             <input type="text" id="table_name" placeholder="my_table"
-                                class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                                class="w-full px-4 py-2 border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                         </div>
                     </div>
 
                     <!-- Columns -->
                     <div class="space-y-4">
                         <div class="flex items-center justify-between">
-                            <h4 class="font-medium text-slate-700">Columns</h4>
+                            <h4 class="font-medium text-slate-700 dark:text-slate-300">Columns</h4>
                             <button onclick="addColumn()"
-                                class="px-3 py-1 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                                class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                                 + Add Column
                             </button>
                         </div>
@@ -55,9 +61,10 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+                    <div
+                        class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-border">
                         <a href="/databases/{{ database.id }}/postgresql"
-                            class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                            class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             Cancel
                         </a>
                         <button onclick="createTable()"
@@ -91,34 +98,34 @@
         const typeOptions = PG_TYPES.map(t => `<option value="${t}">${t}</option>`).join('');
 
         const columnHtml = `
-            <div class="column-row flex items-start gap-3 p-4 bg-slate-50 rounded-lg" data-column-id="${columnCount}">
+            <div class="column-row flex items-start gap-3 p-4 bg-slate-50 dark:bg-dark-hover/50 rounded-lg border border-slate-200 dark:border-dark-border transition-colors" data-column-id="${columnCount}">
                 <div class="flex-1 grid grid-cols-6 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Name</label>
-                        <input type="text" class="col-name w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="column_name">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Name</label>
+                        <input type="text" class="col-name w-full px-3 py-2 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors" placeholder="column_name">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Type</label>
-                        <select class="col-type w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Type</label>
+                        <select class="col-type w-full px-3 py-2 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                             ${typeOptions}
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Length</label>
-                        <input type="text" class="col-length w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="255">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Length</label>
+                        <input type="text" class="col-length w-full px-3 py-2 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors" placeholder="255">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1">Default</label>
-                        <input type="text" class="col-default w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary">
+                        <label class="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Default</label>
+                        <input type="text" class="col-default w-full px-3 py-2 text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-900 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
                     </div>
                     <div class="flex items-end gap-4">
                         <label class="flex items-center gap-2">
-                            <input type="checkbox" class="col-pk rounded border-slate-300 text-primary focus:ring-primary">
-                            <span class="text-xs text-slate-600">PK</span>
+                            <input type="checkbox" class="col-pk rounded border-slate-300 dark:border-dark-border text-primary focus:ring-primary dark:bg-dark-bg">
+                            <span class="text-xs text-slate-600 dark:text-slate-400">PK</span>
                         </label>
                         <label class="flex items-center gap-2">
-                            <input type="checkbox" class="col-nullable rounded border-slate-300 text-primary focus:ring-primary" checked>
-                            <span class="text-xs text-slate-600">Nullable</span>
+                            <input type="checkbox" class="col-nullable rounded border-slate-300 dark:border-dark-border text-primary focus:ring-primary dark:bg-dark-bg" checked>
+                            <span class="text-xs text-slate-600 dark:text-slate-400">Nullable</span>
                         </label>
                     </div>
                     <div class="flex items-end">

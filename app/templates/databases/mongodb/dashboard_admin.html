@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,8 +15,11 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">{{ database.name }} <span
+            </svg>
+            </a>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ database.name }} <span
                     class="text-primary">Dashboard</span></h2>
+            </h2>
         </div>
         <div class="flex items-center gap-4">
             <button onclick="openQueryModal()"
@@ -32,7 +36,10 @@
                     <span class="w-2 h-2 bg-green-500 rounded-full"></span>
                     Connected
                 </span>
-                <span class="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-sm font-medium">
+                Connected
+                </span>
+                <span
+                    class="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-sm font-medium transition-colors">
                     v{{ version }}
                 </span>
             </div>
@@ -43,33 +50,41 @@
         <!-- Cluster Stats -->
         {% if connections != "N/A" %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-sm font-medium text-slate-500 mb-1">Active Connections</div>
-                <div class="text-2xl font-bold text-blue-600">{{ connections }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Active Connections</div>
+                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ connections }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-sm font-medium text-slate-500 mb-1">Inserts / sec</div>
-                <div class="text-2xl font-bold text-green-600">{{ inserts_per_sec }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Inserts / sec</div>
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ inserts_per_sec }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-sm font-medium text-slate-500 mb-1">Queries / sec</div>
-                <div class="text-2xl font-bold text-purple-600">{{ queries_per_sec }}</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Queries / sec</div>
+                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ queries_per_sec }}</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-sm font-medium text-slate-500 mb-1">Data Size</div>
-                <div class="text-2xl font-bold text-orange-600">{{ (data_size / 1024 / 1024)|round(2) }} MB</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Data Size</div>
+                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ (data_size / 1024 /
+                    1024)|round(2) }} MB</div>
             </div>
         </div>
         {% else %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <div class="text-sm font-medium text-slate-500 mb-1">Data Size</div>
-                <div class="text-2xl font-bold text-orange-600">{{ (data_size / 1024 / 1024)|round(2) }} MB</div>
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
+                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Data Size</div>
+                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ (data_size / 1024 /
+                    1024)|round(2) }} MB</div>
             </div>
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 md:col-span-3 flex items-center">
-                <div class="text-sm text-slate-500">
-                    <span class="font-bold text-slate-700">Note:</span> Cluster statistics are unavailable (requires
-                    admin privileges).
+            <div
+                class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border md:col-span-3 flex items-center transition-colors">
+                <div class="text-sm text-slate-500 dark:text-slate-400">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Note:</span> Cluster statistics are
+                    unavailable (requires admin privileges).
                 </div>
             </div>
         </div>
@@ -77,17 +92,20 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Collections -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800">Collections</h3>
+            <div
+                class="lg:col-span-2 bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <div
+                    class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Collections</h3>
                     <a href="/databases/{{ database.id }}/mongodb/create-collection"
-                        class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                         Create Collection
                     </a>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                        <thead
+                            class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                             <tr>
                                 <th class="px-6 py-4">Name</th>
                                 <th class="px-6 py-4">Documents</th>
@@ -96,10 +114,10 @@
                                 <th class="px-6 py-4 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-200">
+                        <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                             {% for col in collections %}
-                            <tr class="hover:bg-slate-50 transition-colors group">
-                                <td class="px-6 py-4 font-medium text-slate-900">{{ col.name }}</td>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors group">
+                                <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ col.name }}</td>
                                 <td class="px-6 py-4">{{ col.count }}</td>
                                 <td class="px-6 py-4">{{ col.avg_size|round(0) }} B</td>
                                 <td class="px-6 py-4">{{ (col.size / 1024)|round(2) }} KB</td>
@@ -108,7 +126,7 @@
                                         <a href="/databases/{{ database.id }}/mongodb/collections/{{ col.name }}/browse"
                                             class="text-primary hover:text-blue-700 font-medium">Browse</a>
                                         <button onclick="dropCollection('{{ col.name }}')"
-                                            class="text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            class="text-slate-400 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
                                             title="Drop Collection">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -127,19 +145,21 @@
 
             <!-- Current Ops -->
             {% if current_ops %}
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200">
-                    <h3 class="font-bold text-slate-800">Current Ops</h3>
+            <div
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+                <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                    <h3 class="font-bold text-slate-800 dark:text-slate-200">Current Ops</h3>
                 </div>
                 <div class="p-0">
-                    <ul class="divide-y divide-slate-200">
+                    <ul class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for op in current_ops %}
-                        <li class="p-4 hover:bg-slate-50">
+                        <li class="p-4 hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
                             <div class="flex justify-between items-start mb-1">
-                                <span class="text-xs font-mono text-slate-500">opid: {{ op.opid }}</span>
-                                <span class="text-xs font-bold text-blue-600">{{ op.op }}</span>
+                                <span class="text-xs font-mono text-slate-500 dark:text-slate-400">opid: {{ op.opid
+                                    }}</span>
+                                <span class="text-xs font-bold text-blue-600 dark:text-blue-400">{{ op.op }}</span>
                             </div>
-                            <p class="text-xs font-mono text-slate-700 truncate">{{ op.ns }}</p>
+                            <p class="text-xs font-mono text-slate-700 dark:text-slate-300 truncate">{{ op.ns }}</p>
                             <div class="mt-2 text-xs text-slate-400">{{ op.secs_running }}s</div>
                         </li>
                         {% endfor %}
@@ -151,33 +171,39 @@
 
         <!-- All Databases -->
         {% if databases %}
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">All Databases</h3>
-                <p class="text-sm text-slate-500 mt-1">Overview of all databases in this MongoDB instance</p>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">All Databases</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Overview of all databases in this MongoDB
+                    instance</p>
             </div>
             <div class="p-6">
                 <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                     {% for db in databases %}
-                    <div class="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-md transition-shadow">
+                    <div
+                        class="bg-white dark:bg-dark-bg rounded-lg border border-slate-200 dark:border-dark-border p-4 hover:shadow-md dark:shadow-none transition-all">
                         <div class="flex items-center justify-between mb-3">
-                            <h4 class="font-bold text-slate-800">{{ db.name }}</h4>
-                            <span class="px-2 py-1 bg-slate-100 text-slate-600 text-xs font-medium rounded">{{
+                            <h4 class="font-bold text-slate-800 dark:text-slate-200">{{ db.name }}</h4>
+                            <span
+                                class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium rounded transition-colors">{{
                                 db.collection_count }} collections</span>
                         </div>
-                        <div class="text-xs text-slate-500 mb-3">
-                            <div class="flex justify-between"><span>Data Size:</span> <span class="font-medium">{{
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                            <div class="flex justify-between"><span>Data Size:</span> <span
+                                    class="font-medium text-slate-700 dark:text-slate-300">{{
                                     (db.data_size / 1024 / 1024)|round(2) }} MB</span></div>
-                            <div class="flex justify-between"><span>Storage:</span> <span class="font-medium">{{
+                            <div class="flex justify-between"><span>Storage:</span> <span
+                                    class="font-medium text-slate-700 dark:text-slate-300">{{
                                     (db.storage_size / 1024 / 1024)|round(2) }} MB</span></div>
                         </div>
                         {% if db.collections %}
-                        <div class="border-t border-slate-200 pt-3 mt-3">
-                            <div class="text-xs font-medium text-slate-600 mb-2">Collections:</div>
+                        <div class="border-t border-slate-200 dark:border-dark-border pt-3 mt-3">
+                            <div class="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Collections:</div>
                             <div class="flex flex-wrap gap-1">
                                 {% for collection in db.collections[:5] %}
                                 <span
-                                    class="px-2 py-1 bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded">{{
+                                    class="px-2 py-1 bg-slate-50 dark:bg-dark-surface border border-slate-200 dark:border-dark-border text-slate-700 dark:text-slate-300 text-xs rounded transition-colors">{{
                                     collection }}</span>
                                 {% endfor %}
                                 {% if db.collections|length > 5 %}

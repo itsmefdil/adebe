@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/{{ database.id }}/mysql" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,7 +15,8 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">Structure: <span class="text-primary">{{ table_name }}</span>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Structure: <span class="text-primary">{{
+                    table_name }}</span>
             </h2>
         </div>
         <div class="flex items-center gap-3">
@@ -27,13 +29,15 @@
 
     <div class="flex-1 overflow-y-auto p-8 space-y-8">
         <!-- Columns -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200">
-                <h3 class="font-bold text-slate-800">Columns</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="font-bold text-slate-800 dark:text-slate-200">Columns</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Name</th>
                             <th class="px-6 py-4">Type</th>
@@ -44,10 +48,10 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for col in columns %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ col.Field }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ col.Field }}</td>
                             <td class="px-6 py-4">{{ col.Type }}</td>
                             <td class="px-6 py-4">{{ col.Null }}</td>
                             <td class="px-6 py-4">{{ col.Key }}</td>
@@ -74,13 +78,15 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-6 border-b border-slate-200">
-                <h3 class="text-lg font-semibold text-slate-800">Indexes</h3>
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
+            <div class="p-6 border-b border-slate-200 dark:border-dark-border">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Indexes</h3>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">Key Name</th>
                             <th class="px-6 py-4">Type</th>
@@ -89,10 +95,10 @@
                             <th class="px-6 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for idx in indexes %}
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ idx.name }}</td>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ idx.name }}</td>
                             <td class="px-6 py-4">{{ idx.type }}</td>
                             <td class="px-6 py-4">{{ idx.unique }}</td>
                             <td class="px-6 py-4">{{ idx.columns_str }}</td>

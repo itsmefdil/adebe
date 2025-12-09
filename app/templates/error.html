@@ -1,29 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Error {{ error_code }} - Database Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
+{% block title %}Error {{ error_code }} - Database Dashboard{% endblock %}
 
-<body class="bg-slate-50 text-slate-900 font-sans antialiased h-screen flex items-center justify-center">
-    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-slate-200 text-center">
+{% block content %}
+<div class="w-full h-full flex items-center justify-center">
+    <div
+        class="max-w-md w-full bg-white dark:bg-dark-surface p-8 rounded-xl shadow-lg border border-slate-200 dark:border-dark-border text-center transition-colors">
         <div class="mb-6">
-            <div class="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div
+                class="w-16 h-16 bg-red-100 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100 dark:border-red-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
             </div>
-            <h1 class="text-3xl font-bold text-slate-800 mb-2">Error {{ error_code }}</h1>
-            <p class="text-lg text-slate-600 font-medium">{{ error_message }}</p>
+            <h1 class="text-3xl font-bold text-slate-800 dark:text-slate-200 mb-2">Error {{ error_code }}</h1>
+            <p class="text-lg text-slate-600 dark:text-slate-400 font-medium">{{ error_message }}</p>
         </div>
 
-        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6 text-left overflow-auto max-h-40">
-            <p class="font-mono text-sm text-slate-500 break-all">{{ error_detail }}</p>
+        <div
+            class="bg-slate-50 dark:bg-dark-bg p-4 rounded-lg border border-slate-200 dark:border-dark-border mb-6 text-left overflow-auto max-h-40">
+            <p class="font-mono text-sm text-slate-500 dark:text-slate-400 break-all">{{ error_detail }}</p>
         </div>
 
         <a href="/dashboard"
@@ -31,6 +29,5 @@
             Return to Dashboard
         </a>
     </div>
-</body>
-
-</html>
+</div>
+{% endblock %}

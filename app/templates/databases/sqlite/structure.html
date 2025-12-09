@@ -5,8 +5,9 @@
 {% block content %}
 {% include "components/sidebar.html" %}
 
-<main class="flex-1 flex flex-col min-w-0 bg-slate-50">
-    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8">
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
         <div class="flex items-center gap-4">
             <a href="/databases/sqlite?id={{ database.id }}" class="text-slate-400 hover:text-slate-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -14,24 +15,26 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800">Structure: {{ table_name }}</h2>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Structure: {{ table_name }}</h2>
         </div>
 
         <div class="flex items-center gap-3">
-            <div class="flex bg-slate-100 rounded-lg p-1">
+            <div class="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1 transition-colors">
                 <a href="/databases/sqlite/table/{{ table_name }}?id={{ database.id }}"
-                    class="px-4 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-800 rounded-md">Data</a>
+                    class="px-4 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 rounded-md transition-colors">Data</a>
                 <span
-                    class="px-4 py-1.5 text-sm font-medium bg-white text-slate-800 shadow-sm rounded-md">Structure</span>
+                    class="px-4 py-1.5 text-sm font-medium bg-white dark:bg-dark-surface text-slate-800 dark:text-slate-200 shadow-sm rounded-md transition-colors">Structure</span>
             </div>
         </div>
     </header>
 
     <div class="flex-1 overflow-y-auto p-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div
+            class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm text-slate-600">
-                    <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500">
+                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                    <thead
+                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
                             <th class="px-6 py-4">CID</th>
                             <th class="px-6 py-4">Name</th>
@@ -41,12 +44,13 @@
                             <th class="px-6 py-4">Primary Key</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-200">
+                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for col in columns %}
-                        <tr class="hover:bg-slate-50 transition-colors">
+                        <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
                             <td class="px-6 py-4 font-mono">{{ col.cid }}</td>
-                            <td class="px-6 py-4 font-medium text-slate-900">{{ col.name }}</td>
-                            <td class="px-6 py-4"><span class="px-2 py-1 bg-slate-100 rounded text-xs">{{ col.type
+                            <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ col.name }}</td>
+                            <td class="px-6 py-4"><span
+                                    class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded text-xs">{{ col.type
                                     }}</span></td>
                             <td class="px-6 py-4">
                                 {% if col.notnull == 1 %}
