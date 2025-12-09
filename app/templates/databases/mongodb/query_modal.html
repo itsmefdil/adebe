@@ -1,12 +1,15 @@
 <!-- Query Playground Modal -->
 <div id="query-modal"
-    class="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 transition-opacity">
-    <div
-        class="bg-white dark:bg-dark-surface rounded-xl shadow-lg max-w-6xl w-full mx-4 flex flex-col max-h-[90vh] border border-slate-200 dark:border-dark-border transition-colors">
-        <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+    class="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col border border-slate-200 dark:border-dark-border overflow-hidden transform scale-95 transition-transform duration-200"
+        id="query-modal-content">
+
+        <!-- Header -->
+        <div
+            class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50/50 dark:bg-dark-surface">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-primary/10 rounded-lg">
-                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-2 bg-green-500/10 rounded-lg">
+                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                         </path>
@@ -14,133 +17,209 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Query Playground</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">Run raw MongoDB commands</p>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Execute MongoDB Commands</p>
                 </div>
             </div>
-            <button onclick="closeQueryModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                    </path>
-                </svg>
-            </button>
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <select id="query-template" onchange="loadTemplate()"
+                        class="text-xs px-3 py-1.5 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-colors">
+                        <option value="">Load Template...</option>
+                        <option value="ping">Ping</option>
+                        <option value="listCollections">List Collections</option>
+                        <option value="find">Find Documents</option>
+                        <option value="findOne">Find One</option>
+                        <option value="count">Count</option>
+                        <option value="aggregate">Aggregate</option>
+                        <option value="distinct">Distinct</option>
+                    </select>
+                    <button onclick="formatQuery()"
+                        class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-dark-bg transition-colors"
+                        title="Format JSON">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+                    <button onclick="runQuery()"
+                        class="px-4 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm shadow-green-600/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                            </path>
+                        </svg>
+                        Run <span class="text-green-200 text-xs ml-1 font-normal hidden md:inline">(Cmd+Enter)</span>
+                    </button>
+                </div>
+                <div class="w-px h-6 bg-slate-200 dark:bg-dark-border"></div>
+                <button onclick="closeQueryModal()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="p-6 overflow-y-auto flex-1">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Command
-                                (JSON)</label>
-                            <select id="query-template" onchange="loadTemplate()"
-                                class="text-xs px-3 py-1 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors">
-                                <option value="">Select Example...</option>
-                                <option value="ping">Ping</option>
-                                <option value="listCollections">List Collections</option>
-                                <option value="find">Find Documents</option>
-                                <option value="findOne">Find One Document</option>
-                                <option value="count">Count Documents</option>
-                                <option value="aggregate">Aggregate</option>
-                                <option value="distinct">Distinct Values</option>
-                            </select>
-                        </div>
-                        <textarea id="query-input" rows="15"
-                            class="w-full font-mono text-sm p-4 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-colors"
-                            placeholder='{
-    "find": "collection_name",
-    "filter": { "status": "active" },
-    "limit": 5
-}'></textarea>
-                    </div>
-                    <div class="flex justify-end">
-                        <button onclick="runQuery()"
-                            class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Run Query
-                        </button>
-                    </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar: History -->
+            <div
+                class="w-64 bg-slate-50 dark:bg-dark-bg border-r border-slate-200 dark:border-dark-border flex flex-col hidden md:flex">
+                <div
+                    class="px-4 py-3 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                    <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        History</h4>
+                    <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-600">Clear</button>
+                </div>
+                <div id="query-history-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <!-- History items will be injected here -->
+                    <div class="text-center py-8 text-slate-400 text-xs">No history yet</div>
                 </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Result</label>
-                <div class="relative h-[calc(100%-2rem)]">
-                    <pre id="query-result"
-                        class="absolute inset-0 w-full h-full font-mono text-sm bg-slate-50 dark:bg-dark-bg p-4 rounded-lg border border-slate-200 dark:border-dark-border overflow-auto text-slate-700 dark:text-slate-300 transition-colors">Run a query to see results here...</pre>
+
+            <!-- Central Area -->
+            <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1e1e1e]">
+                <!-- #1e1e1e matches Monaco dark theme background -->
+
+                <!-- Input Section -->
+                <div
+                    class="flex-1 flex flex-col min-h-0 border-b border-slate-200 dark:border-dark-border relative group">
+                    <div class="absolute top-0 right-0 z-10 px-2 py-1">
+                        <span
+                            class="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-dark-border px-1.5 py-0.5 rounded">Input</span>
+                    </div>
+                    <div id="monaco-editor-input" class="flex-1 w-full h-full"></div>
+                </div>
+
+                <!-- Result Section -->
+                <div class="flex-1 flex flex-col min-h-0 relative bg-slate-50 dark:bg-[#1e1e1e]">
+                    <div class="absolute top-0 right-0 z-10 px-2 py-1 flex items-center gap-2">
+                        <span id="query-status"
+                            class="hidden text-[10px] items-center gap-1 font-medium px-1.5 py-0.5 rounded"></span>
+                        <span
+                            class="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-dark-border px-1.5 py-0.5 rounded">Output</span>
+                    </div>
+                    <div id="monaco-editor-output" class="flex-1 w-full h-full"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-</div>
 
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
+    let inputEditor = null;
+    let outputEditor = null;
+    const HISTORY_KEY = 'mongo_playground_history_v1';
+
+    // Templates
     const queryTemplates = {
-        ping: `{
-    "ping": 1
-}`,
-        listCollections: `{
-    "listCollections": 1
-}`,
-        find: `{
-    "find": "collection_name",
-    "filter": {
-        "status": "active"
-    },
-    "limit": 10
-}`,
-        findOne: `{
-    "find": "collection_name",
-    "filter": {
-        "_id": "document_id"
-    },
-    "limit": 1
-}`,
-        count: `{
-    "count": "collection_name",
-    "query": {
-        "status": "active"
-    }
-}`,
-        aggregate: `{
-    "aggregate": "collection_name",
-    "pipeline": [
-        {
-            "$match": {
-                "status": "active"
-            }
-        },
-        {
-            "$group": {
-                "_id": "$category",
-                "count": { "$sum": 1 }
-            }
-        }
-    ],
-    "cursor": {}
-}`,
-        distinct: `{
-    "distinct": "collection_name",
-    "key": "field_name",
-    "query": {}
-}`
+        ping: '{\n    "ping": 1\n}',
+        listCollections: '{\n    "listCollections": 1\n}',
+        find: '{\n    "find": "collection_name",\n    "filter": { "status": "active" },\n    "limit": 10\n}',
+        findOne: '{\n    "find": "collection_name",\n    "filter": { "_id": "..." },\n    "limit": 1\n}',
+        count: '{\n    "count": "collection_name",\n    "query": { "status": "active" }\n}',
+        aggregate: '{\n    "aggregate": "collection_name",\n    "pipeline": [\n        { "$match": { "status": "active" } },\n        { "$group": { "_id": "$category", "count": { "$sum": 1 } } }\n    ],\n    "cursor": {}\n}',
+        distinct: '{\n    "distinct": "collection_name",\n    "key": "field_name",\n    "query": {}\n}'
     };
 
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+    function initMonaco() {
+        if (inputEditor) return; // Already initialized
+
+        require(['vs/editor/editor.main'], function () {
+            // Theme detection
+            const isDark = document.documentElement.classList.contains('dark');
+            const theme = isDark ? 'vs-dark' : 'vs';
+
+            // Common options
+            const commonOptions = {
+                language: 'json',
+                theme: theme,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                automaticLayout: true,
+                padding: { top: 16, bottom: 16 },
+                scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'visible',
+                    useShadows: false,
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10
+                },
+                overviewRulerLanes: 0,
+                hideCursorInOverviewRuler: true,
+            };
+
+            // Input Editor
+            inputEditor = monaco.editor.create(document.getElementById('monaco-editor-input'), {
+                ...commonOptions,
+                value: '{\n    "ping": 1\n}',
+            });
+
+            // Output Editor (Read-only)
+            outputEditor = monaco.editor.create(document.getElementById('monaco-editor-output'), {
+                ...commonOptions,
+                value: '// Results will appear here...',
+                readOnly: true,
+                lineNumbers: 'off',
+            });
+
+            // Add Command: Run (Cmd/Ctrl + Enter)
+            inputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
+                runQuery();
+            });
+
+            // Listen for theme changes in the app to update Monaco
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.attributeName === "class") {
+                        const isDarkNow = document.documentElement.classList.contains('dark');
+                        monaco.editor.setTheme(isDarkNow ? 'vs-dark' : 'vs');
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+        });
+    }
+
     function openQueryModal() {
-        document.getElementById('query-modal').classList.remove('hidden');
-        document.getElementById('query-modal').classList.add('flex');
+        const modal = document.getElementById('query-modal');
+        const modalContent = document.getElementById('query-modal-content');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Small delay for animation
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            // Init Monaco after modal is visible so it can calculate dimensions
+            initMonaco();
+            updateHistoryUI();
+        }, 10);
     }
 
     function closeQueryModal() {
-        document.getElementById('query-modal').classList.add('hidden');
-        document.getElementById('query-modal').classList.remove('flex');
+        const modal = document.getElementById('query-modal');
+        const modalContent = document.getElementById('query-modal-content');
+
+        modal.classList.add('opacity-0');
+        modalContent.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
     }
 
-    // Close modal on click outside
+    // Close on click outside
     document.getElementById('query-modal').addEventListener('click', (e) => {
         if (e.target === document.getElementById('query-modal')) {
             closeQueryModal();
@@ -149,57 +228,142 @@
 
     function loadTemplate() {
         const select = document.getElementById('query-template');
-        const input = document.getElementById('query-input');
-        const template = queryTemplates[select.value];
-
-        if (template) {
-            input.value = template;
+        const val = select.value;
+        if (val && queryTemplates[val]) {
+            if (inputEditor) {
+                inputEditor.setValue(queryTemplates[val]);
+                select.value = ""; // Reset
+            }
         }
     }
 
+    function formatQuery() {
+        if (inputEditor) {
+            inputEditor.getAction('editor.action.formatDocument').run();
+        }
+    }
 
     async function runQuery() {
-        const input = document.getElementById('query-input').value;
-        const resultPre = document.getElementById('query-result');
+        if (!inputEditor) return;
+
+        const rawCommand = inputEditor.getValue();
+        // Update status
+        const statusEl = document.getElementById('query-status');
+        statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
+        statusEl.innerHTML = `<svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Running...`;
+        statusEl.classList.remove('hidden');
 
         try {
-            const command = JSON.parse(input);
-            resultPre.textContent = 'Running...';
-            resultPre.classList.remove('text-red-600', 'dark:text-red-400');
-            resultPre.classList.add('text-slate-700', 'dark:text-slate-300');
+            // Validate JSON first
+            let command;
+            try {
+                command = JSON.parse(rawCommand);
+            } catch (e) {
+                throw new Error("Invalid JSON: " + e.message);
+            }
 
             const response = await fetch('/databases/{{ database.id }}/mongodb/command', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ command }),
             });
 
-            // Check if response is JSON
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                resultPre.textContent = 'Error: Server returned non-JSON response. Please check if you are logged in.';
-                resultPre.classList.remove('text-slate-700', 'dark:text-slate-300');
-                resultPre.classList.add('text-red-600', 'dark:text-red-400');
-                return;
-            }
+            if (!response.ok) throw new Error("Network response was not ok");
 
             const data = await response.json();
 
+            outputEditor.setValue(JSON.stringify(data.result || data, null, 2));
+            // Trigger format to make it pretty
+            setTimeout(() => {
+                outputEditor.getAction('editor.action.formatDocument').run();
+                outputEditor.setScrollTop(0);
+            }, 50);
+
             if (data.success) {
-                resultPre.textContent = JSON.stringify(data.result, null, 2);
-                resultPre.classList.remove('text-red-600', 'dark:text-red-400');
-                resultPre.classList.add('text-slate-700', 'dark:text-slate-300');
+                statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+                statusEl.innerHTML = `Success`;
+                saveToHistory(rawCommand);
             } else {
-                resultPre.textContent = 'Error: ' + (data.error || 'Unknown error');
-                resultPre.classList.remove('text-slate-700', 'dark:text-slate-300');
-                resultPre.classList.add('text-red-600', 'dark:text-red-400');
+                statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+                statusEl.innerHTML = `Error`;
             }
+
         } catch (e) {
-            resultPre.textContent = 'Invalid JSON: ' + e.message;
-            resultPre.classList.remove('text-slate-700', 'dark:text-slate-300');
-            resultPre.classList.add('text-red-600', 'dark:text-red-400');
+            outputEditor.setValue(e.toString());
+            statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+            statusEl.innerHTML = `Failed`;
+        }
+    }
+
+    // History Functions
+    function getHistory() {
+        try {
+            return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        } catch { return []; }
+    }
+
+    function saveToHistory(commandStr) {
+        let history = getHistory();
+        // Remove duplicates if exists
+        history = history.filter(h => h.cmd !== commandStr);
+        // Add to top
+        history.unshift({
+            cmd: commandStr,
+            ts: new Date().toISOString()
+        });
+        // Limit to 20
+        if (history.length > 20) history = history.slice(0, 20);
+
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        updateHistoryUI();
+    }
+
+    function clearHistory() {
+        localStorage.removeItem(HISTORY_KEY);
+        updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+        const list = document.getElementById('query-history-list');
+        const history = getHistory();
+
+        if (history.length === 0) {
+            list.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs">No history yet</div>';
+            return;
+        }
+
+        list.innerHTML = history.map((item, idx) => {
+            // Try to extract a meaningful name from the JSON
+            let name = "Query";
+            try {
+                const obj = JSON.parse(item.cmd);
+                const keys = Object.keys(obj);
+                if (keys.length > 0) name = keys[0]; // e.g., "find", "aggregate"
+                if (obj.collection_name) name += `: ${obj.collection_name}`; // "find: users"
+                else if (typeof obj[keys[0]] === 'string') name += `: ${obj[keys[0]]}`;
+            } catch (e) { }
+
+            const time = new Date(item.ts).toLocaleTimeString();
+
+            return `
+                <div onclick="restoreHistory(${idx})" class="group cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-surface border border-transparent hover:border-slate-200 dark:hover:border-dark-border transition-all">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-mono text-xs font-semibold text-green-600 dark:text-green-400 truncate max-w-[120px]">${name}</span>
+                        <span class="text-[10px] text-slate-400">${time}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate opacity-60 group-hover:opacity-100">
+                        ${item.cmd.replace(/\s+/g, ' ').substring(0, 40)}...
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function restoreHistory(idx) {
+        const history = getHistory();
+        if (history[idx] && inputEditor) {
+            inputEditor.setValue(history[idx].cmd);
+            formatQuery();
         }
     }
 </script>

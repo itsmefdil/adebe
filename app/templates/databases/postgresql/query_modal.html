@@ -1,207 +1,392 @@
 <!-- Query Playground Modal -->
-<div id="query-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm transition-opacity"
-        onclick="closeQueryModal()"></div>
+<div id="query-modal"
+    class="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 opacity-0 transition-opacity duration-200">
+    <div class="bg-white dark:bg-dark-surface rounded-xl shadow-2xl w-full max-w-[95vw] h-[90vh] flex flex-col border border-slate-200 dark:border-dark-border overflow-hidden transform scale-95 transition-transform duration-200"
+        id="query-modal-content">
 
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <!-- Header -->
+        <div
+            class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50/50 dark:bg-dark-surface">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600/10 rounded-lg">
+                    <!-- Postgres Elephant-ish Icon or generic DB -->
+                    <svg class="w-5 h-5 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                        </path>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Query Playground</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Execute PostgreSQL Queries</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <select id="query-template" onchange="loadTemplate()"
+                        class="text-xs px-3 py-1.5 border border-slate-300 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-blue-600 outline-none transition-colors">
+                        <option value="">Load Template...</option>
+                        <option value="select">SELECT *</option>
+                        <option value="selectWhere">SELECT WHERE</option>
+                        <option value="selectJoin">SELECT JOIN</option>
+                        <option value="insert">INSERT</option>
+                        <option value="update">UPDATE</option>
+                        <option value="delete">DELETE</option>
+                        <option value="createTable">CREATE TABLE</option>
+                        <option value="listTables">List Tables</option>
+                        <option value="explain">EXPLAIN ANALYZE</option>
+                    </select>
+
+                    <button onclick="formatQuery()"
+                        class="p-1.5 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-md hover:bg-slate-100 dark:hover:bg-dark-bg transition-colors"
+                        title="Format SQL">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16m-7 6h7"></path>
+                        </svg>
+                    </button>
+
+                    <button onclick="runQuery()"
+                        class="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm shadow-blue-600/20">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                            </path>
+                        </svg>
+                        Run <span class="text-blue-200 text-xs ml-1 font-normal hidden md:inline">(Cmd+Enter)</span>
+                    </button>
+                </div>
+                <div class="w-px h-6 bg-slate-200 dark:bg-dark-border"></div>
+                <button onclick="closeQueryModal()"
+                    class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex flex-1 overflow-hidden">
+            <!-- Sidebar: History -->
             <div
-                class="relative transform overflow-hidden rounded-xl bg-white dark:bg-dark-surface text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-slate-200 dark:border-dark-border">
-
-                <!-- Modal Header -->
+                class="w-64 bg-slate-50 dark:bg-dark-bg border-r border-slate-200 dark:border-dark-border flex flex-col hidden md:flex">
                 <div
-                    class="border-b border-slate-200 dark:border-dark-border px-6 py-4 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-slate-900 dark:text-slate-200" id="modal-title">Query Playground
-                    </h3>
-                    <div class="flex items-center gap-3">
-                        <select id="query-template" onchange="loadQueryTemplate(this.value)"
-                            class="text-sm border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg text-slate-700 dark:text-slate-200 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary focus:border-primary transition-colors">
-                            <option value="">Select a template...</option>
-                            <option value="select">SELECT * FROM table</option>
-                            <option value="count">COUNT(*) from table</option>
-                        </select>
-                        <button type="button" onclick="closeQueryModal()"
-                            class="text-slate-400 hover:text-slate-500 dark:hover:text-slate-300">
-                            <span class="sr-only">Close</span>
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+                    class="px-4 py-3 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
+                    <h4 class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        History</h4>
+                    <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-600">Clear</button>
+                </div>
+                <div id="query-history-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+                    <div class="text-center py-8 text-slate-400 text-xs">No history yet</div>
+                </div>
+            </div>
+
+            <!-- Central Area -->
+            <div class="flex-1 flex flex-col min-w-0 bg-white dark:bg-[#1e1e1e]">
+
+                <!-- Input Section -->
+                <div
+                    class="h-2/5 flex flex-col min-h-0 border-b border-slate-200 dark:border-dark-border relative group">
+                    <div class="absolute top-0 right-0 z-10 px-2 py-1">
+                        <span
+                            class="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-dark-border px-1.5 py-0.5 rounded">PGSQL
+                            Input</span>
                     </div>
+                    <div id="monaco-editor-input" class="flex-1 w-full h-full"></div>
                 </div>
 
-                <!-- Modal Body -->
-                <div class="p-6 space-y-4">
-                    <!-- Query Input -->
-                    <div class="space-y-2">
-                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">SQL Query</label>
-                        <textarea id="sql-query" rows="6"
-                            class="w-full px-4 py-3 bg-slate-50 dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-lg font-mono text-sm text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-primary focus:border-primary placeholder-slate-400 transition-colors"
-                            placeholder="Enter your SQL query here..."></textarea>
+                <!-- Result Section -->
+                <div class="flex-1 flex flex-col min-h-0 relative bg-slate-50 dark:bg-dark-bg">
+                    <div class="absolute top-0 right-0 z-10 px-2 py-1 flex items-center gap-2">
+                        <span id="query-status"
+                            class="hidden text-[10px] items-center gap-1 font-medium px-1.5 py-0.5 rounded"></span>
+                        <span
+                            class="text-[10px] text-slate-400 font-mono bg-slate-100 dark:bg-dark-border px-1.5 py-0.5 rounded">Result</span>
                     </div>
-
-                    <div class="flex items-center gap-3">
-                        <button onclick="executeQuery()"
-                            class="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
-                                </path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Execute
-                        </button>
-                        <button onclick="clearQuery()"
-                            class="px-4 py-2 bg-slate-100 dark:bg-dark-hover text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-dark-border transition-colors">
-                            Clear
-                        </button>
-                        <span id="query-status" class="text-sm text-slate-500 dark:text-slate-400"></span>
-                    </div>
-
-                    <!-- Results -->
-                    <div id="query-results" class="hidden">
-                        <div class="rounded-lg border border-slate-200 dark:border-dark-border overflow-hidden">
-                            <div class="max-h-60 overflow-auto">
-                                <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
-                                    <thead
-                                        class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 sticky top-0 transition-colors">
-                                        <tr id="results-header"></tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-200 dark:divide-dark-border" id="results-body">
-                                    </tbody>
-                                </table>
-                            </div>
+                    <!-- HTML Table Output -->
+                    <div id="query-result"
+                        class="absolute inset-0 w-full h-full p-4 overflow-auto text-sm font-mono text-slate-700 dark:text-slate-300">
+                        <div class="h-full flex items-center justify-center text-slate-400">
+                            Run a query to see results...
                         </div>
                     </div>
-                </div>
-
-                <!-- Error -->
-                <div id="query-error"
-                    class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm dark:bg-red-900/20 dark:border-red-700 dark:text-red-300">
                 </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
 <script>
+    let inputEditor = null;
+    const HISTORY_KEY = 'postgres_playground_history_v1';
+
+    // Templates
+    const queryTemplates = {
+        select: `SELECT * FROM table_name LIMIT 10;`,
+        selectWhere: `SELECT column1, column2\nFROM table_name\nWHERE condition = 'value'\nLIMIT 10;`,
+        selectJoin: `SELECT t1.*, t2.column_name\nFROM table1 t1\nINNER JOIN table2 t2 ON t1.id = t2.table1_id\nLIMIT 10;`,
+        insert: `INSERT INTO table_name (column1, column2)\nVALUES ('value1', 'value2');`,
+        update: `UPDATE table_name\nSET column1 = 'new_value'\nWHERE id = 1;`,
+        delete: `DELETE FROM table_name\nWHERE id = 1;`,
+        createTable: `CREATE TABLE new_table (\n    id SERIAL PRIMARY KEY,\n    name VARCHAR(100),\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n);`,
+        listTables: `SELECT table_name \nFROM information_schema.tables \nWHERE table_schema = 'public';`,
+        explain: `EXPLAIN ANALYZE SELECT * FROM table_name;`
+    };
+
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+
+    function initMonaco() {
+        if (inputEditor) return;
+
+        require(['vs/editor/editor.main'], function () {
+            const isDark = document.documentElement.classList.contains('dark');
+            const theme = isDark ? 'vs-dark' : 'vs';
+
+            const commonOptions = {
+                language: 'pgsql',
+                theme: theme,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 13,
+                fontFamily: "'JetBrains Mono', 'Fira Code', Consolas, monospace",
+                automaticLayout: true,
+                padding: { top: 16, bottom: 16 },
+                scrollbar: {
+                    vertical: 'visible',
+                    horizontal: 'visible',
+                    useShadows: false,
+                    verticalScrollbarSize: 10,
+                    horizontalScrollbarSize: 10
+                },
+                overviewRulerLanes: 0,
+                hideCursorInOverviewRuler: true,
+            };
+
+            inputEditor = monaco.editor.create(document.getElementById('monaco-editor-input'), {
+                ...commonOptions,
+                value: 'SELECT * FROM information_schema.tables WHERE table_schema = \'public\' LIMIT 10;',
+            });
+
+            // Run command
+            inputEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, function () {
+                runQuery();
+            });
+
+            const observer = new MutationObserver(function (mutations) {
+                mutations.forEach(function (mutation) {
+                    if (mutation.attributeName === "class") {
+                        const isDarkNow = document.documentElement.classList.contains('dark');
+                        monaco.editor.setTheme(isDarkNow ? 'vs-dark' : 'vs');
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+        });
+    }
+
     function openQueryModal() {
-        document.getElementById('query-modal').classList.remove('hidden');
+        const modal = document.getElementById('query-modal');
+        const modalContent = document.getElementById('query-modal-content');
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modalContent.classList.remove('scale-95');
+            initMonaco();
+            updateHistoryUI();
+        }, 10);
     }
 
     function closeQueryModal() {
-        document.getElementById('query-modal').classList.add('hidden');
+        const modal = document.getElementById('query-modal');
+        const modalContent = document.getElementById('query-modal-content');
+
+        modal.classList.add('opacity-0');
+        modalContent.classList.add('scale-95');
+
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
     }
 
-    function clearQuery() {
-        document.getElementById('sql-query').value = '';
-        document.getElementById('query-results').classList.add('hidden');
-        document.getElementById('query-error').classList.add('hidden');
-        document.getElementById('query-status').textContent = '';
-    }
+    document.getElementById('query-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('query-modal')) {
+            closeQueryModal();
+        }
+    });
 
-    // Placeholder for loadQueryTemplate function
-    function loadQueryTemplate(template) {
-        const queryInput = document.getElementById('sql-query');
-        if (template === 'select') {
-            queryInput.value = 'SELECT * FROM your_table_name LIMIT 10;';
-        } else if (template === 'count') {
-            queryInput.value = 'SELECT COUNT(*) FROM your_table_name;';
-        } else {
-            queryInput.value = '';
+    function loadTemplate() {
+        const select = document.getElementById('query-template');
+        const val = select.value;
+        if (val && queryTemplates[val]) {
+            if (inputEditor) {
+                inputEditor.setValue(queryTemplates[val]);
+                select.value = "";
+            }
         }
     }
 
-    async function executeQuery() {
-        const query = document.getElementById('sql-query').value.trim();
-        if (!query) {
-            alert('Please enter a query');
+    function formatQuery() {
+        if (inputEditor) {
+            inputEditor.getAction('editor.action.formatDocument').run();
+        }
+    }
+
+    async function runQuery() {
+        if (!inputEditor) return;
+
+        const input = inputEditor.getValue().trim();
+        const resultDiv = document.getElementById('query-result');
+        const statusEl = document.getElementById('query-status');
+
+        if (!input) {
+            resultDiv.innerHTML = '<div class="text-red-500 p-4">Please enter a SQL query.</div>';
             return;
         }
 
-        const statusEl = document.getElementById('query-status');
-        const resultsDiv = document.getElementById('query-results');
-        const errorDiv = document.getElementById('query-error');
-        const headerRow = document.getElementById('results-header');
-        const body = document.getElementById('results-body');
+        statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
+        statusEl.innerHTML = `<svg class="animate-spin h-3 w-3" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Running...`;
+        statusEl.classList.remove('hidden');
+        resultDiv.innerHTML = '<div class="h-full flex items-center justify-center text-slate-400 opacity-50">Running query...</div>';
 
-
-        statusEl.textContent = 'Executing...';
-        resultsDiv.classList.add('hidden');
-        errorDiv.classList.add('hidden');
-        headerRow.innerHTML = ''; // Clear previous headers
-        body.innerHTML = ''; // Clear previous body
+        const startTime = performance.now();
 
         try {
-            const startTime = performance.now();
-
-            const response = await fetch(`/databases/{{ database.id }}/postgresql/query`, {
+            const response = await fetch('/databases/{{ database.id }}/postgresql/query', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ query: query })
+                body: JSON.stringify({ query: input }),
             });
 
             const data = await response.json();
             const duration = ((performance.now() - startTime) / 1000).toFixed(3);
 
-            if (response.ok && data.success) {
-                if (data.error) {
-                    errorDiv.textContent = data.error;
-                    errorDiv.classList.remove('hidden');
-                    statusEl.textContent = '';
+            if (data.success) {
+                statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300";
+                statusEl.innerHTML = `Success (${duration}s)`;
+                saveToHistory(input);
+
+                if (data.rows && data.rows.length > 0) {
+                    const columns = Object.keys(data.rows[0]);
+
+                    let html = `<div class="w-full">
+                        <table class="w-full text-xs text-left border-collapse">
+                            <thead class="bg-slate-100 dark:bg-dark-surface sticky top-0 z-10 shadow-sm">
+                                <tr>`;
+
+                    columns.forEach(col => {
+                        html += `<th class="border-b border-r border-slate-200 dark:border-dark-border px-3 py-2 font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap bg-slate-100 dark:bg-dark-surface min-w-[100px] last:border-r-0">${col}</th>`;
+                    });
+
+                    html += `</tr></thead><tbody class="divide-y divide-slate-100 dark:divide-dark-border">`;
+
+                    data.rows.forEach(row => {
+                        html += '<tr class="hover:bg-slate-50 dark:hover:bg-dark-surface/50">';
+                        columns.forEach(col => {
+                            const value = row[col];
+                            let displayValue = value;
+                            if (value === null) displayValue = '<span class="text-slate-400 italic">NULL</span>';
+                            else if (typeof value === 'object') displayValue = JSON.stringify(value);
+
+                            html += `<td class="border-r border-slate-100 dark:border-dark-border px-3 py-1.5 text-slate-700 dark:text-slate-300 whitespace-nowrap last:border-r-0">${displayValue}</td>`;
+                        });
+                        html += '</tr>';
+                    });
+
+                    html += `</tbody></table></div>`;
+                    html += `<div class="sticky bottom-0 bg-slate-50/90 dark:bg-dark-bg/90 backdrop-blur border-t border-slate-200 dark:border-dark-border px-3 py-1.5 text-xs text-slate-500">${data.rows.length} rows returned</div>`;
+
+                    resultDiv.innerHTML = html;
                 } else {
-                    if (data.rows && data.rows.length > 0) {
-                        // Render headers
-                        const headers = Object.keys(data.rows[0]);
-                        headerRow.innerHTML = headers.map(h => `<th class="px-6 py-3 whitespace-nowrap bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">${h}</th>`).join('');
-
-                        // Render body
-                        body.innerHTML = data.rows.map(row => `
-                            <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
-                                ${headers.map(h => `<td class="px-6 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300">${row[h] !== null ? row[h] : '<span class="italic text-slate-400">NULL</span>'}</td>`).join('')}
-                            </tr>
-                        `).join('');
-
-                        resultsDiv.classList.remove('hidden');
-                        statusEl.textContent = `Completed in ${duration}s (${data.rows.length} rows)`;
-                    } else if (data.rows && data.rows.length === 0) {
-                        // Empty result set but successful query
-                        headerRow.innerHTML = '<th class="px-6 py-3 text-center bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400">Result</th>';
-                        body.innerHTML = '<tr><td class="px-6 py-3 text-center text-slate-500 dark:text-slate-400">Query executed successfully. No rows returned.</td></tr>';
-                        resultsDiv.classList.remove('hidden');
-                        statusEl.textContent = `Completed in ${duration}s (0 rows)`;
-                    } else {
-                        // Query executed successfully, but no rows/columns (e.g., DDL, DML without returning)
-                        statusEl.textContent = `Query executed successfully (${duration}s)`;
-                    }
+                    // Success but no rows
+                    resultDiv.innerHTML = '<div class="h-full flex flex-col items-center justify-center text-slate-500"><span>Query executed successfully</span><span class="text-xs text-slate-400 mt-1">No rows returned</span></div>';
                 }
             } else {
-                errorDiv.textContent = data.error || 'Unknown error';
-                errorDiv.classList.remove('hidden');
-                statusEl.textContent = '';
+                throw new Error(data.error || 'Unknown error');
             }
-        } catch (error) {
-            errorDiv.textContent = error.message;
-            errorDiv.classList.remove('hidden');
-            statusEl.textContent = '';
+        } catch (e) {
+            statusEl.className = "flex items-center gap-1 font-medium px-1.5 py-0.5 rounded text-xs bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300";
+            statusEl.innerHTML = `Error`;
+            resultDiv.innerHTML = `<div class="text-red-600 dark:text-red-400 p-4 font-mono whitespace-pre-wrap">Error: ${e.message}</div>`;
         }
     }
 
-    // Close modal on escape key
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            closeQueryModal();
-        }
-    });
+    // History Functions
+    function getHistory() {
+        try {
+            return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+        } catch { return []; }
+    }
 
-    // Execute query on Ctrl+Enter
-    document.getElementById('query-input')?.addEventListener('keydown', function (e) {
-        if (e.ctrlKey && e.key === 'Enter') {
-            executeQuery();
+    function saveToHistory(query) {
+        let history = getHistory();
+        history = history.filter(h => h.query !== query);
+        history.unshift({
+            query: query,
+            ts: new Date().toISOString()
+        });
+        if (history.length > 20) history = history.slice(0, 20);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+        updateHistoryUI();
+    }
+
+    function clearHistory() {
+        localStorage.removeItem(HISTORY_KEY);
+        updateHistoryUI();
+    }
+
+    function updateHistoryUI() {
+        const list = document.getElementById('query-history-list');
+        const history = getHistory();
+
+        if (history.length === 0) {
+            list.innerHTML = '<div class="text-center py-8 text-slate-400 text-xs">No history yet</div>';
+            return;
         }
-    });
+
+        list.innerHTML = history.map((item, idx) => {
+            const time = new Date(item.ts).toLocaleTimeString();
+            // Determine type
+            let type = "SQL";
+            const q = item.query.trim().toUpperCase();
+            let color = "text-slate-500";
+
+            if (q.startsWith("SELECT")) { type = "SELECT"; color = "text-blue-500"; }
+            if (q.startsWith("INSERT")) { type = "INSERT"; color = "text-green-500"; }
+            if (q.startsWith("UPDATE")) { type = "UPDATE"; color = "text-yellow-500"; }
+            if (q.startsWith("DELETE")) { type = "DELETE"; color = "text-red-500"; }
+            if (q.startsWith("CREATE") || q.startsWith("ALTER") || q.startsWith("DROP")) { type = "DDL"; color = "text-purple-500"; }
+            if (q.startsWith("EXPLAIN")) { type = "EXPLAIN"; color = "text-orange-500"; }
+
+            return `
+                <div onclick="restoreHistory(${idx})" class="group cursor-pointer p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-dark-surface border border-transparent hover:border-slate-200 dark:hover:border-dark-border transition-all">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-mono text-[10px] font-bold ${color}">${type}</span>
+                        <span class="text-[9px] text-slate-400">${time}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate opacity-60 group-hover:opacity-100">
+                        ${item.query.replace(/\s+/g, ' ').substring(0, 40)}...
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function restoreHistory(idx) {
+        const history = getHistory();
+        if (history[idx] && inputEditor) {
+            inputEditor.setValue(history[idx].query);
+            formatQuery();
+        }
+    }
 </script>
