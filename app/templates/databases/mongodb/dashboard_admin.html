@@ -52,24 +52,70 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div
                 class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
-                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Active Connections</div>
-                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ connections }}</div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Active Connections
+                        </div>
+                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ connections }}</div>
+                    </div>
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
             <div
                 class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
-                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Inserts / sec</div>
-                <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ inserts_per_sec }}</div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Inserts / sec</div>
+                        <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ inserts_per_sec }}</div>
+                    </div>
+                    <div class="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
             <div
                 class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
-                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Queries / sec</div>
-                <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ queries_per_sec }}</div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Queries / sec</div>
+                        <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">{{ queries_per_sec }}</div>
+                    </div>
+                    <div class="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </div>
             </div>
             <div
                 class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm border border-slate-200 dark:border-dark-border transition-colors">
-                <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Data Size</div>
-                <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ (data_size / 1024 /
-                    1024)|round(2) }} MB</div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Data Size</div>
+                        <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">{{ (data_size / 1024 /
+                            1024)|round(2) }} MB</div>
+                    </div>
+                    <div class="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                        <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                            </path>
+                        </svg>
+                    </div>
+                </div>
             </div>
         </div>
         {% else %}
@@ -109,6 +155,7 @@
                             <tr>
                                 <th class="px-6 py-4">Name</th>
                                 <th class="px-6 py-4">Documents</th>
+                                <th class="px-6 py-4">Indexes</th>
                                 <th class="px-6 py-4">Avg Size</th>
                                 <th class="px-6 py-4">Total Size</th>
                                 <th class="px-6 py-4 text-right">Actions</th>
@@ -119,6 +166,13 @@
                             <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors group">
                                 <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ col.name }}</td>
                                 <td class="px-6 py-4">{{ col.count }}</td>
+                                <td class="px-6 py-4">
+                                    <div class="flex flex-col">
+                                        <span class="text-slate-900 dark:text-slate-200">{{ col.nindexes }}</span>
+                                        <span class="text-xs text-slate-500">{{ (col.index_size / 1024)|round(2) }}
+                                            KB</span>
+                                    </div>
+                                </td>
                                 <td class="px-6 py-4">{{ col.avg_size|round(0) }} B</td>
                                 <td class="px-6 py-4">{{ (col.size / 1024)|round(2) }} KB</td>
                                 <td class="px-6 py-4 text-right">

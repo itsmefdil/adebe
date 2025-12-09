@@ -21,6 +21,9 @@ class ConnectionManager:
     def get_all_connections(self):
         return self.db.query(DatabaseConnection).all()
 
+    def get_some_connections(self):
+        return self.db.query(DatabaseConnection).limit(5).all()
+
     def get_connection(self, connection_id: int):
         return self.db.query(DatabaseConnection).filter(DatabaseConnection.id == connection_id).first()
 

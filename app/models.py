@@ -17,6 +17,7 @@ class DatabaseConnection(Base):
     username = Column(String, nullable=True)
     password = Column(String, nullable=True)  # In a real app, encrypt this!
     auth_source = Column(String, nullable=True)  # MongoDB authSource (e.g., 'admin')
+    category = Column(String, default="development")  # development, staging, production
 
 class ActivityLog(Base):
     __tablename__ = "activity_logs"

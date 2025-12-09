@@ -7,14 +7,25 @@ from app.database import get_db, ConnectionManager, ActivityLogManager
 router = APIRouter(prefix="/databases")
 
 @router.get("", response_class=HTMLResponse)
-def list_databases(request: Request, db: Session = Depends(get_db)):
+def list_databases(request: Request, category: str = None, db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
     
     manager = ConnectionManager(db)
-    databases = manager.get_all_connections()
-    return templates.TemplateResponse("databases/list.html", {"request": request, "user": user, "databases": databases})
+    all_databases = manager.get_all_connections()
+    
+    if category and category != 'all':
+        databases = [d for d in all_databases if d.category == category]
+    else:
+        databases = all_databases
+        
+    return templates.TemplateResponse("databases/list.html", {
+        "request": request, 
+        "user": user, 
+        "databases": databases,
+        "current_category": category or 'all'
+    })
 
 @router.get("/new", response_class=HTMLResponse)
 def new_database(request: Request):
@@ -33,6 +44,7 @@ def create_database(
     database_name: str = Form(None),
     username: str = Form(None),
     password: str = Form(None),
+    category: str = Form("development"),
     db: Session = Depends(get_db)
 ):
     user = get_current_user(request)
@@ -46,7 +58,8 @@ def create_database(
         "port": port,
         "database_name": database_name,
         "username": username,
-        "password": password
+        "password": password,
+        "category": category
     }
     
     manager = ConnectionManager(db)
@@ -88,6 +101,7 @@ def update_database(
     database_name: str = Form(None),
     username: str = Form(None),
     password: str = Form(None),
+    category: str = Form("development"),
     db: Session = Depends(get_db)
 ):
     user = get_current_user(request)
@@ -101,13 +115,45 @@ def update_database(
         "port": port,
         "database_name": database_name,
         "username": username,
-        "password": password
+        "password": password,
+        "category": category
     }
     
     manager = ConnectionManager(db)
     manager.update_connection(db_id, connection_data)
     
     return RedirectResponse(url="/databases", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.patch("/{db_id}/category", response_class=HTMLResponse)
+def update_database_category(
+    request: Request,
+    db_id: int,
+    category: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return HTMLResponse("Unauthorized", status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database:
+        return HTMLResponse("Database not found", status_code=404)
+        
+    # Update only the category
+    manager.update_connection(db_id, {"category": category})
+    
+    # Return the new badge/select element
+    # return templates.TemplateResponse("databases/partials/category_badge.html", {"request": request, "db": database})
+    # Since we are using a select, we can just return a success toast or nothing if we want, 
+    # but the user asked for a "toggle". 
+    # Let's return a simple success span or keep the select as is. 
+    # Actually, if we use hx-patch on the select itself, we don't need to return much other than maybe the selected state 
+    # or just 200 OK.
+    
+    # Let's return the updated select component to be safe/clean
+    return templates.TemplateResponse("components/category_select.html", {"request": request, "db": manager.get_connection(db_id)})
 
 @router.post("/{db_id}/delete")
 def delete_database(request: Request, db_id: int, db: Session = Depends(get_db)):

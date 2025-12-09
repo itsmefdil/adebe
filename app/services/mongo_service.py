@@ -46,7 +46,9 @@ class MongoService:
                             "count": stats.get("count", 0),
                             "avg_size": stats.get("avgObjSize", 0),
                             "size": stats.get("size", 0),
-                            "storage_size": stats.get("storageSize", 0)
+                            "storage_size": stats.get("storageSize", 0),
+                            "nindexes": stats.get("nindexes", 0),
+                            "index_size": stats.get("totalIndexSize", 0)
                         })
                     except Exception:
                         # Fallback if collStats fails

@@ -64,7 +64,7 @@ async def dashboard(request: Request, db: Session = Depends(get_db)):
     
     # Fetch real connections and stats
     manager = ConnectionManager(db)
-    databases = manager.get_all_connections()
+    databases = manager.get_some_connections()
     stats = manager.get_stats()
     
     # Fetch recent activities

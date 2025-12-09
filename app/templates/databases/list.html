@@ -24,6 +24,43 @@
         </div>
     </header>
 
+    <div class="px-8 mt-6">
+        <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-dark-surface rounded-xl inline-flex shadow-inner">
+            <a href="?category=all" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+               {% if current_category == 'all' %}
+               bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 shadow-sm
+               {% else %}
+               text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300
+               {% endif %}">
+                All
+            </a>
+            <a href="?category=development" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+               {% if current_category == 'development' %}
+               bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 shadow-sm
+               {% else %}
+               text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300
+               {% endif %}">
+                Development
+            </a>
+            <a href="?category=staging" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+               {% if current_category == 'staging' %}
+               bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 shadow-sm
+               {% else %}
+               text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300
+               {% endif %}">
+                Staging
+            </a>
+            <a href="?category=production" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+               {% if current_category == 'production' %}
+               bg-white dark:bg-dark-bg text-slate-800 dark:text-slate-200 shadow-sm
+               {% else %}
+               text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300
+               {% endif %}">
+                Production
+            </a>
+        </div>
+    </div>
+
     <div class="flex-1 overflow-y-auto p-8">
         {% if databases %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -75,7 +112,8 @@
 
                     <!-- Info -->
                     <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            {% include "components/category_select.html" %}
                             {% if db.type == 'MySQL' %}
                             <span
                                 class="inline-flex px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 rounded-full text-[10px] font-bold tracking-wide uppercase">MySQL</span>
