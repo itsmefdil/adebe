@@ -205,6 +205,26 @@ class MySQLService:
         query = f"DROP INDEX `{index_name}` ON `{table_name}`"
         return self.connector.execute_query(query)
 
+    def bulk_drop_tables(self, table_names: list[str]):
+        if not table_names:
+            return
+        tables_str = ", ".join([f"`{name}`" for name in table_names])
+        return self.connector.execute_query(f"DROP TABLE {tables_str}")
+
+    def bulk_delete_rows(self, table_name: str, pk_column: str, pk_values: list):
+        if not pk_values:
+            return
+        placeholders = ", ".join(["%s"] * len(pk_values))
+        query = f"DELETE FROM `{table_name}` WHERE `{pk_column}` IN ({placeholders})"
+        return self.connector.execute_query(query, tuple(pk_values))
+
+    def bulk_drop_columns(self, table_name: str, column_names: list[str]):
+        if not column_names:
+            return
+        drops = [f"DROP COLUMN `{col}`" for col in column_names]
+        query = f"ALTER TABLE `{table_name}` {', '.join(drops)}"
+        return self.connector.execute_query(query)
+
     def _build_column_definition(self, col: dict):
         definition = f"`{col['name']}` {col['type']}"
         if col.get('length'):

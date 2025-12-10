@@ -76,16 +76,31 @@
             class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border overflow-hidden transition-colors">
             <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between">
                 <h3 class="font-bold text-slate-800 dark:text-slate-200">Database Schema</h3>
-                <a href="/databases/{{ database.id }}/mysql/create-table"
-                    class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
-                    Create Table
-                </a>
+                <div class="flex items-center gap-3">
+                    <button id="bulk-delete-btn" onclick="bulkDeleteTables()"
+                        class="hidden px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        Delete Selected (<span id="selected-count">0</span>)
+                    </button>
+                    <a href="/databases/{{ database.id }}/mysql/create-table"
+                        class="px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                        Create Table
+                    </a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
                     <thead
                         class="bg-slate-50 dark:bg-dark-hover text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 transition-colors">
                         <tr>
+                            <th class="px-6 py-4 w-10">
+                                <input type="checkbox" id="select-all-tables" onchange="toggleAllTables(this)"
+                                    class="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4">
+                            </th>
                             <th class="px-6 py-4">Table Name</th>
                             <th class="px-6 py-4">Engine</th>
                             <th class="px-6 py-4">Rows</th>
@@ -97,6 +112,11 @@
                     <tbody class="divide-y divide-slate-200 dark:divide-dark-border">
                         {% for table in tables %}
                         <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
+                            <td class="px-6 py-4">
+                                <input type="checkbox" class="table-checkbox" value="{{ table.Name }}"
+                                    onchange="updateBulkDeleteState()"
+                                    class="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4">
+                            </td>
                             <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">{{ table.Name }}</td>
                             <td class="px-6 py-4">{{ table.Engine }}</td>
                             <td class="px-6 py-4">{{ table.Rows or 0 }}</td>
@@ -122,7 +142,7 @@
                         {% endfor %}
                         {% if not tables %}
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-slate-500">No tables found</td>
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-500">No tables found</td>
                         </tr>
                         {% endif %}
                     </tbody>
@@ -246,6 +266,63 @@
                     }
                 } catch (error) {
                     alert('Error dropping table: ' + error.message);
+                }
+            }
+        );
+    }
+
+    function toggleAllTables(source) {
+        const checkboxes = document.querySelectorAll('.table-checkbox');
+        checkboxes.forEach(cb => cb.checked = source.checked);
+        updateBulkDeleteState();
+    }
+
+    function updateBulkDeleteState() {
+        const checkboxes = document.querySelectorAll('.table-checkbox:checked');
+        const btn = document.getElementById('bulk-delete-btn');
+        const countSpan = document.getElementById('selected-count');
+
+        if (checkboxes.length > 0) {
+            btn.classList.remove('hidden');
+            countSpan.textContent = checkboxes.length;
+        } else {
+            btn.classList.add('hidden');
+        }
+
+        // Update select all checkbox
+        const allCheckboxes = document.querySelectorAll('.table-checkbox');
+        const selectAll = document.getElementById('select-all-tables');
+        selectAll.checked = checkboxes.length === allCheckboxes.length && allCheckboxes.length > 0;
+    }
+
+    async function bulkDeleteTables() {
+        const checkboxes = document.querySelectorAll('.table-checkbox:checked');
+        const tableNames = Array.from(checkboxes).map(cb => cb.value);
+
+        if (tableNames.length === 0) return;
+
+        showDeleteModal(
+            'Batch Delete Tables',
+            `Are you sure you want to delete ${tableNames.length} tables? This action cannot be undone.`,
+            async () => {
+                try {
+                    const response = await fetch('/databases/{{ database.id }}/mysql/tables/batch-delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ table_names: tableNames })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Error deleting tables: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error deleting tables: ' + error.message);
                 }
             }
         );

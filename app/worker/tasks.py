@@ -26,7 +26,7 @@ def backup_database(self, db_id: int):
         service = BackupService(database)
         
         # Run async backup method
-        filename = asyncio.run(service.backup())
+        filename = params_to_sync(service.backup)(backup_filename)
         
         return {"status": "success", "filename": filename}
         
@@ -52,7 +52,7 @@ def restore_database(self, db_id: int, backup_filename: str):
         service = BackupService(database)
         
         # Run async restore method
-        asyncio.run(service.restore(backup_filename))
+        params_to_sync(service.restore)(backup_filename)
         
         return {"status": "success", "message": "Database restored successfully"}
         

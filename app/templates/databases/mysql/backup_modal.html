@@ -1,82 +1,117 @@
 <!-- Backup Management Modal -->
-<div id="backupModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="backupModal" data-db-id="{{ database.id }}" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title"
+    role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeBackupModal()"></div>
 
     <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <div
                 class="relative transform overflow-hidden rounded-xl bg-white dark:bg-dark-surface text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-slate-200 dark:border-dark-border">
-                
+
                 <!-- Header -->
-                <div class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-dark-bg">
+                <div
+                    class="px-6 py-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between bg-slate-50 dark:bg-dark-bg">
                     <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100" id="modal-title">
                         Backup & Restore
                     </h3>
                     <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-500 transition-colors">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
 
                 <!-- Body -->
                 <div class="px-6 py-6 space-y-6">
-                    
+
                     <!-- Create Backup Section -->
-                    <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-100 rounded-lg border border-blue-100 dark:border-blue-800/30">
+                    <div
+                        class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-100 rounded-lg border border-blue-100 dark:border-blue-800/30">
                         <div>
                             <h4 class="font-medium">Create New Backup</h4>
                             <p class="text-sm opacity-80 mt-1">Generate a full backup of the current database.</p>
                         </div>
                         <button onclick="triggerBackup()" id="createBackupBtn"
                             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2 shadow-sm">
-                            <span id="backupSpinner" class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                            <span id="backupSpinner"
+                                class="hidden animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
                             <span>Create Backup</span>
                         </button>
                     </div>
+
 
                     <!-- Backup List -->
                     <div>
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="font-medium text-slate-900 dark:text-slate-200">Available Backups</h4>
-                            <button onclick="refreshBackups()" class="text-sm text-primary hover:text-blue-700 font-medium flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                                Refresh
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <button onclick="deleteSelected()" id="batchDeleteBtn"
+                                    class="hidden text-sm text-red-600 hover:text-red-700 font-medium flex items-center gap-1 transition-colors">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                    Delete Selected
+                                </button>
+                                <button onclick="refreshBackups()"
+                                    class="text-sm text-primary hover:text-blue-700 font-medium flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                        </path>
+                                    </svg>
+                                    Refresh
+                                </button>
+                            </div>
                         </div>
-                        
-                        <div class="border border-slate-200 dark:border-dark-border rounded-lg overflow-hidden max-h-64 overflow-y-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-slate-50 dark:bg-dark-hover text-xs uppercase text-slate-500 font-semibold sticky top-0">
+
+                        <div
+                            class="border border-slate-200 dark:border-dark-border rounded-lg overflow-hidden max-h-64 overflow-y-auto w-full">
+                            <table class="w-full text-left text-sm table-fixed">
+                                <thead
+                                    class="bg-slate-50 dark:bg-dark-hover text-xs uppercase text-slate-500 font-semibold sticky top-0 z-10">
                                     <tr>
+                                        <th class="px-4 py-3 w-10">
+                                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()"
+                                                class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                                        </th>
                                         <th class="px-4 py-3">Filename</th>
-                                        <th class="px-4 py-3 text-right">Action</th>
+                                        <th class="px-4 py-3 text-right w-36">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody id="backupList" class="divide-y divide-slate-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
+                                <tbody id="backupList"
+                                    class="divide-y divide-slate-200 dark:divide-dark-border bg-white dark:bg-dark-surface">
                                     <tr>
-                                        <td colspan="2" class="px-4 py-4 text-center text-slate-500 text-xs">Loading backups...</td>
+                                        <td colspan="3" class="px-4 py-4 text-center text-slate-500 text-xs">Loading
+                                            backups...</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    
+
                     <!-- Task Status -->
-                    <div id="taskStatusArea" class="hidden p-4 rounded-lg bg-slate-50 dark:bg-dark-hover border border-slate-200 dark:border-dark-border">
-                         <div class="flex items-center gap-3">
-                             <div id="taskStatusIcon" class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                             <div class="flex-1">
-                                 <p id="taskStatusText" class="text-sm font-medium text-slate-800 dark:text-slate-200">Processing...</p>
-                                 <p id="taskStatusDetail" class="text-xs text-slate-500">Checking status...</p>
-                             </div>
-                         </div>
+                    <div id="taskStatusArea"
+                        class="hidden p-4 rounded-lg bg-slate-50 dark:bg-dark-hover border border-slate-200 dark:border-dark-border">
+                        <div class="flex items-center gap-3">
+                            <div id="taskStatusIcon"
+                                class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full">
+                            </div>
+                            <div class="flex-1">
+                                <p id="taskStatusText" class="text-sm font-medium text-slate-800 dark:text-slate-200">
+                                    Processing...</p>
+                                <p id="taskStatusDetail" class="text-xs text-slate-500">Checking status...</p>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
 
                 <!-- Footer -->
-                <div class="px-6 py-4 border-t border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg flex justify-end">
+                <div
+                    class="px-6 py-4 border-t border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg flex justify-end">
                     <button type="button" onclick="closeBackupModal()"
                         class="px-4 py-2 bg-white dark:bg-dark-surface border border-slate-300 dark:border-dark-border text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors shadow-sm">
                         Close
@@ -87,10 +122,162 @@
     </div>
 </div>
 
-<script>
-    const dbId = {{ database.id }};
-    let pollInterval = null;
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmationModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeDeleteModal()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-dark-surface text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-200 dark:border-dark-border">
+                <div class="bg-white dark:bg-dark-surface px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-slate-100"
+                                id="deleteModalTitle">Delete Backup</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-slate-500 dark:text-slate-400" id="deleteModalMessage">Are you
+                                    sure you want to delete this backup? This action cannot be undone.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-slate-50 dark:bg-dark-bg px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 dark:border-dark-border">
+                    <button type="button" onclick="confirmDelete()" id="confirmDeleteBtn"
+                        class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto">
+                        Delete
+                        <span id="deleteSpinner"
+                            class="hidden ml-2 animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    </button>
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-dark-surface px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-dark-border hover:bg-slate-50 dark:hover:bg-dark-hover sm:mt-0 sm:w-auto">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Create Backup Modal -->
+<div id="createBackupModal" class="fixed inset-0 z-[60] hidden" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeCreateBackupModal()">
+    </div>
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-dark-surface text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-200 dark:border-dark-border">
+                <div class="bg-white dark:bg-dark-surface px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-slate-100"
+                                id="createBackupModalTitle">Create Backup</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Are you sure you want to create a
+                                    full backup of the current database? This might take a while depending on the
+                                    database size.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-slate-50 dark:bg-dark-bg px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 dark:border-dark-border">
+                    <button type="button" onclick="confirmCreateBackup()" id="confirmCreateBackupBtn"
+                        class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">
+                        Create Backup
+                        <span id="createBackupSpinnerModal"
+                            class="hidden ml-2 animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    </button>
+                    <button type="button" onclick="closeCreateBackupModal()"
+                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-dark-surface px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-dark-border hover:bg-slate-50 dark:hover:bg-dark-hover sm:mt-0 sm:w-auto">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Restore Confirmation Modal -->
+<div id="restoreConfirmationModal" class="fixed inset-0 z-[70] hidden" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onclick="closeRestoreModal()"></div>
+    <div class="fixed inset-0 z-10 overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-lg bg-white dark:bg-dark-surface text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md border border-slate-200 dark:border-dark-border">
+                <div class="bg-white dark:bg-dark-surface px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24"
+                                stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                            <h3 class="text-base font-semibold leading-6 text-slate-900 dark:text-slate-100"
+                                id="restoreModalTitle">Restore Database</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Are you sure you want to restore
+                                    from <span id="restoreFilename"
+                                        class="font-mono text-slate-800 dark:text-slate-200 font-semibold"></span>?</p>
+                                <div
+                                    class="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-md border border-amber-100 dark:border-amber-900/30">
+                                    <p
+                                        class="text-xs text-amber-800 dark:text-amber-200 font-medium flex items-center gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                            </path>
+                                        </svg>
+                                        WARNING: This will overwrite the current database.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div
+                    class="bg-slate-50 dark:bg-dark-bg px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 border-t border-slate-100 dark:border-dark-border">
+                    <button type="button" onclick="confirmRestore()" id="confirmRestoreBtn"
+                        class="inline-flex w-full justify-center rounded-md bg-amber-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-500 sm:ml-3 sm:w-auto">
+                        Proceed Restore
+                        <span id="restoreSpinnerModal"
+                            class="hidden ml-2 animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span>
+                    </button>
+                    <button type="button" onclick="closeRestoreModal()"
+                        class="mt-3 inline-flex w-full justify-center rounded-md bg-white dark:bg-dark-surface px-3 py-2 text-sm font-semibold text-slate-900 dark:text-slate-300 shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-dark-border hover:bg-slate-50 dark:hover:bg-dark-hover sm:mt-0 sm:w-auto">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- State Management ---
+    const dbId = document.getElementById('backupModal').dataset.dbId;
+    let pollInterval = null;
+    let pendingDeleteFilename = null;
+    let pendingDeleteBatch = null;
+    let pendingRestoreFilename = null;
+
+    // --- Main Backup Modal Functions ---
     function openBackupModal() {
         document.getElementById('backupModal').classList.remove('hidden');
         refreshBackups();
@@ -103,15 +290,28 @@
 
     async function refreshBackups() {
         const listBody = document.getElementById('backupList');
+        const selectAll = document.getElementById('selectAllCheckbox');
+        selectAll.checked = false;
+        checkSelection(); // Reset batch delete button visibility
+
         try {
             const response = await fetch(`/backups/database/${dbId}/list`);
             const data = await response.json();
-            
+
             if (data.files && data.files.length > 0) {
                 listBody.innerHTML = data.files.map(file => `
-                    <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors">
-                        <td class="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-400">${file}</td>
-                        <td class="px-4 py-3 text-right">
+                    <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors group">
+                        <td class="px-4 py-3">
+                            <input type="checkbox" name="backupSelect" value="${file}" onchange="checkSelection()" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-400 break-all">${file}</td>
+                        <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
+                             <button onclick="deleteBackup('${file}')" class="text-xs p-1 text-slate-400 hover:text-red-600 transition-colors" title="Delete">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                             <a href="/backups/database/${dbId}/backups/download/${file}" target="_blank" class="text-xs p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Download">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            </a>
                             <button onclick="triggerRestore('${file}')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
                                 Restore
                             </button>
@@ -119,104 +319,251 @@
                     </tr>
                 `).join('');
             } else {
-                listBody.innerHTML = `<tr><td colspan="2" class="px-4 py-4 text-center text-slate-500 text-xs text-italic">No backups found</td></tr>`;
+                listBody.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-slate-500 text-xs text-italic">No backups found</td></tr>`;
             }
         } catch (e) {
-            listBody.innerHTML = `<tr><td colspan="2" class="px-4 py-4 text-center text-red-500 text-xs">Error loading backups</td></tr>`;
+            listBody.innerHTML = `<tr><td colspan="3" class="px-4 py-4 text-center text-red-500 text-xs">Error loading backups</td></tr>`;
         }
     }
 
+    // --- Selection Logic ---
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAllCheckbox');
+        const checkboxes = document.getElementsByName('backupSelect');
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        checkSelection();
+    }
+
+    function checkSelection() {
+        const checkboxes = document.getElementsByName('backupSelect');
+        const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+        const btn = document.getElementById('batchDeleteBtn');
+        const selectAll = document.getElementById('selectAllCheckbox');
+
+        if (checkedCount > 0) {
+            btn.classList.remove('hidden');
+            btn.innerText = `Delete (${checkedCount})`;
+        } else {
+            btn.classList.add('hidden');
+        }
+
+        // Update select all checkbox state
+        if (checkedCount < checkboxes.length) {
+            selectAll.checked = false;
+        } else if (checkedCount > 0 && checkedCount === checkboxes.length) {
+            selectAll.checked = true;
+        }
+    }
+
+    // --- Create Backup Logic ---
+    function openCreateBackupModal() {
+        document.getElementById('createBackupModal').classList.remove('hidden');
+    }
+
+    function closeCreateBackupModal() {
+        document.getElementById('createBackupModal').classList.add('hidden');
+    }
+
     async function triggerBackup() {
-        if (!confirm("Are you sure you want to create a new backup?")) return;
-        
-        const btn = document.getElementById('createBackupBtn');
-        const spinner = document.getElementById('backupSpinner');
-        
+        openCreateBackupModal();
+    }
+
+    async function confirmCreateBackup() {
+        const btn = document.getElementById('confirmCreateBackupBtn');
+        const spinner = document.getElementById('createBackupSpinnerModal');
+        const mainBtn = document.getElementById('createBackupBtn');
+        const mainSpinner = document.getElementById('backupSpinner');
+
         btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
         spinner.classList.remove('hidden');
-        
+        mainBtn.disabled = true;
+
         try {
             const response = await fetch(`/backups/database/${dbId}/backup`, { method: 'POST' });
             const data = await response.json();
-            
+
             if (data.task_id) {
+                closeCreateBackupModal();
+                mainSpinner.classList.remove('hidden');
                 startPolling(data.task_id, 'Creating backup...');
             } else {
-                alert("Failed to start backup task");
-                btn.disabled = false;
-                spinner.classList.add('hidden');
+                throw new Error("Failed to start backup task");
             }
         } catch (e) {
             alert("Error: " + e.message);
             btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
+            mainBtn.disabled = false;
+        }
+    }
+
+    // --- Delete Backup Logic ---
+    function openDeleteModal(title, message) {
+        document.getElementById('deleteModalTitle').innerText = title;
+        document.getElementById('deleteModalMessage').innerText = message;
+        document.getElementById('deleteConfirmationModal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteConfirmationModal').classList.add('hidden');
+        pendingDeleteFilename = null;
+        pendingDeleteBatch = null;
+    }
+
+    async function deleteBackup(filename) {
+        pendingDeleteFilename = filename;
+        pendingDeleteBatch = null;
+        openDeleteModal('Delete Backup', `Are you sure you want to delete backup "${filename}"?`);
+    }
+
+    async function deleteSelected() {
+        const checkboxes = document.getElementsByName('backupSelect');
+        const selectedFiles = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+
+        if (selectedFiles.length === 0) return;
+
+        pendingDeleteBatch = selectedFiles;
+        pendingDeleteFilename = null;
+        openDeleteModal('Delete Multiple Backups', `Are you sure you want to delete ${selectedFiles.length} selected backup(s)?`);
+    }
+
+    async function confirmDelete() {
+        const btn = document.getElementById('confirmDeleteBtn');
+        const spinner = document.getElementById('deleteSpinner');
+
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        spinner.classList.remove('hidden');
+
+        try {
+            let response;
+            if (pendingDeleteFilename) {
+                const formData = new FormData();
+                formData.append('filename', pendingDeleteFilename);
+                response = await fetch(`/backups/database/${dbId}/backups/delete`, {
+                    method: 'POST',
+                    body: formData
+                });
+            } else if (pendingDeleteBatch) {
+                response = await fetch(`/backups/database/${dbId}/backups/batch-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filenames: pendingDeleteBatch })
+                });
+            } else {
+                return;
+            }
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                refreshBackups();
+                closeDeleteModal();
+            } else {
+                alert("Failed to delete backup(s): " + (data.error || data.message));
+            }
+        } catch (e) {
+            alert("Error deleting backup(s): " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
             spinner.classList.add('hidden');
         }
     }
 
+    // --- Restore Backup Logic ---
+    function openRestoreModal(filename) {
+        document.getElementById('restoreFilename').innerText = filename;
+        document.getElementById('restoreConfirmationModal').classList.remove('hidden');
+    }
+
+    function closeRestoreModal() {
+        document.getElementById('restoreConfirmationModal').classList.add('hidden');
+        pendingRestoreFilename = null;
+    }
+
     async function triggerRestore(filename) {
-        if (!confirm(`WARNING: This will overwrite the current database with "${filename}".\n\nAre you sure you want to proceed?`)) return;
-        
+        pendingRestoreFilename = filename;
+        openRestoreModal(filename);
+    }
+
+    async function confirmRestore() {
+        const btn = document.getElementById('confirmRestoreBtn');
+        const spinner = document.getElementById('restoreSpinnerModal');
+
+        btn.disabled = true;
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        spinner.classList.remove('hidden');
+
         try {
             const formData = new FormData();
-            formData.append('filename', filename);
-            
+            formData.append('filename', pendingRestoreFilename);
+
             const response = await fetch(`/backups/database/${dbId}/restore`, {
                 method: 'POST',
                 body: formData
             });
             const data = await response.json();
-            
+
             if (data.task_id) {
+                closeRestoreModal();
                 startPolling(data.task_id, 'Restoring database...');
             } else {
-                alert("Failed to start restore task");
+                throw new Error("Failed to start restore task");
             }
         } catch (e) {
             alert("Error: " + e.message);
+            btn.disabled = false;
+            btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            spinner.classList.add('hidden');
         }
     }
 
+    // --- Task Polling ---
     function startPolling(taskId, actionName) {
         const statusArea = document.getElementById('taskStatusArea');
         const statusText = document.getElementById('taskStatusText');
         const statusDetail = document.getElementById('taskStatusDetail');
         const statusIcon = document.getElementById('taskStatusIcon');
-        
+
         statusArea.classList.remove('hidden');
         statusText.innerText = actionName;
         statusDetail.innerText = "Queued";
-        
+        statusIcon.className = "animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full";
+        statusIcon.innerHTML = ""; // Clear any previous icons
+
         if (pollInterval) clearInterval(pollInterval);
-        
+
         pollInterval = setInterval(async () => {
             try {
                 const res = await fetch(`/backups/tasks/${taskId}`);
                 const data = await res.json();
-                
+
                 statusDetail.innerText = `Status: ${data.status}`;
-                
+
                 if (data.status === 'SUCCESS') {
                     clearInterval(pollInterval);
                     statusIcon.className = "w-4 h-4 text-green-500";
                     statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
                     statusText.innerText = "Completed Successfully";
-                    
-                    // Re-enable backup button if it was backup
+
                     document.getElementById('createBackupBtn').disabled = false;
                     document.getElementById('backupSpinner').classList.add('hidden');
-                    
+
                     refreshBackups();
-                    
-                    // Hide after 3 seconds
+
+                    // Hide status area after 5 seconds
                     setTimeout(() => statusArea.classList.add('hidden'), 5000);
-                    
+
                 } else if (data.status === 'FAILURE') {
                     clearInterval(pollInterval);
                     statusIcon.className = "w-4 h-4 text-red-500";
                     statusIcon.innerHTML = `<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
                     statusText.innerText = "Task Failed";
                     statusDetail.innerText = data.result ? (data.result.message || JSON.stringify(data.result)) : "Unknown error";
-                    
+
                     document.getElementById('createBackupBtn').disabled = false;
                     document.getElementById('backupSpinner').classList.add('hidden');
                 }

@@ -44,6 +44,16 @@ class CreateTableRequest(BaseModel):
 class ExecuteQueryRequest(BaseModel):
     query: str
 
+class BatchDeleteTablesRequest(BaseModel):
+    table_names: List[str]
+
+class BatchDeleteRowsRequest(BaseModel):
+    pk_column: str
+    pk_values: List[Any]
+
+class BatchDeleteColumnsRequest(BaseModel):
+    column_names: List[str]
+
 @router.get("/{db_id}/mysql", response_class=HTMLResponse)
 def mysql_dashboard(request: Request, db_id: int, db: Session = Depends(get_db)):
     user = get_current_user(request)
@@ -448,6 +458,80 @@ def mysql_drop_table(request: Request, db_id: int, table_name: str, db: Session 
     try:
         service = MySQLService(database)
         service.drop_table(table_name)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.post("/{db_id}/mysql/tables/batch-delete", response_class=JSONResponse)
+def mysql_batch_drop_tables(
+    request: Request,
+    db_id: int,
+    data: BatchDeleteTablesRequest,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        service.bulk_drop_tables(data.table_names)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.post("/{db_id}/mysql/tables/{table_name}/rows/batch-delete", response_class=JSONResponse)
+def mysql_batch_delete_rows(
+    request: Request,
+    db_id: int,
+    table_name: str,
+    data: BatchDeleteRowsRequest,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        service.bulk_delete_rows(table_name, data.pk_column, data.pk_values)
+        return JSONResponse({"success": True})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+@router.post("/{db_id}/mysql/tables/{table_name}/columns/batch-delete", response_class=JSONResponse)
+def mysql_batch_drop_columns(
+    request: Request,
+    db_id: int,
+    table_name: str,
+    data: BatchDeleteColumnsRequest,
+    db: Session = Depends(get_db)
+):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MySQL":
+        return JSONResponse({"error": "Invalid database"}, status_code=400)
+    
+    try:
+        service = MySQLService(database)
+        service.bulk_drop_columns(table_name, data.column_names)
         return JSONResponse({"success": True})
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)

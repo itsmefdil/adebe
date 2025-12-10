@@ -1,13 +1,26 @@
-from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
+import os
+import shutil
+import tempfile
+from typing import List
+from datetime import datetime
+
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse, FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
+
 from app.database import get_db, ConnectionManager
 from app.dependencies import get_current_user
+from app.models import DatabaseConnection
+from app.services.backup_service import BackupService
 from app.worker.tasks import backup_database, restore_database, export_table_task, import_table_task
 from app.core.celery_app import celery_app
 from app.core.storage import get_storage_backend
 
 router = APIRouter(prefix="/backups")
+
+class BatchDeleteRequest(BaseModel):
+    filenames: List[str]
 
 @router.post("/database/{db_id}/backup")
 def trigger_backup(request: Request, db_id: int, db: Session = Depends(get_db)):
@@ -33,6 +46,36 @@ def list_backups(request: Request, db_id: int):
     # For now, return all or implement better filtering.
     return JSONResponse({"files": files})
 
+@router.get("/database/{db_id}/backups/download/{filename}")
+def download_backup(request: Request, db_id: int, filename: str, background_tasks: BackgroundTasks):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+        
+    storage = get_storage_backend()
+    
+    # Create a temp file to download to
+    # We maintain the extension from the original filename
+    _, ext = os.path.splitext(filename)
+    tmp_fd, tmp_path = tempfile.mkstemp(suffix=ext)
+    os.close(tmp_fd)
+    
+    try:
+        storage.download(filename, tmp_path)
+    except Exception as e:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        return JSONResponse({"error": f"Failed to retrieve backup: {str(e)}"}, status_code=404)
+        
+    # Schedule cleanup
+    background_tasks.add_task(os.remove, tmp_path)
+    
+    return FileResponse(
+        path=tmp_path, 
+        filename=filename,
+        media_type='application/octet-stream'
+    )
+
 @router.post("/database/{db_id}/restore")
 def trigger_restore(request: Request, db_id: int, filename: str = Form(...), db: Session = Depends(get_db)):
     user = get_current_user(request)
@@ -41,6 +84,51 @@ def trigger_restore(request: Request, db_id: int, filename: str = Form(...), db:
         
     task = restore_database.delay(db_id, filename)
     return JSONResponse({"task_id": task.id, "status": "processing"})
+
+@router.post("/database/{db_id}/backups/delete")
+async def delete_backup_endpoint(request: Request, db_id: int, filename: str = Form(...), db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    database = db.query(DatabaseConnection).filter(DatabaseConnection.id == db_id).first()
+    if not database:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+        
+    service = BackupService(database)
+    await service.delete_backup(filename)
+    
+    return JSONResponse({"status": "success", "message": f"Backup {filename} deleted"})
+
+
+
+@router.post("/database/{db_id}/backups/batch-delete")
+async def batch_delete_backups(request: Request, db_id: int, payload: BatchDeleteRequest, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+    
+    database = db.query(DatabaseConnection).filter(DatabaseConnection.id == db_id).first()
+    if not database:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+        
+    service = BackupService(database)
+    deleted_count = 0
+    errors = []
+    
+    for filename in payload.filenames:
+        try:
+            await service.delete_backup(filename)
+            deleted_count += 1
+        except Exception as e:
+            errors.append(f"{filename}: {str(e)}")
+            
+    return JSONResponse({
+        "status": "success", 
+        "message": f"Deleted {deleted_count} backups", 
+        "errors": errors
+    })
+
 
 @router.post("/database/{db_id}/tables/{table_name}/export")
 def trigger_export(
@@ -75,11 +163,6 @@ async def trigger_import(
     storage = get_storage_backend()
     
     # We need to save the UploadFile to a temp location first then upload to storage
-    import tempfile
-    import os
-    import shutil
-    
-    from datetime import datetime
     timestamp = datetime.now()
     file_identifier = f"import_{db_id}_{table_name}_{timestamp.strftime('%Y%m%d%H%M%S')}.{format}"
     
