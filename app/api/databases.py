@@ -7,7 +7,7 @@ from app.database import get_db, ConnectionManager, ActivityLogManager
 router = APIRouter(prefix="/databases")
 
 @router.get("", response_class=HTMLResponse)
-def list_databases(request: Request, category: str = None, db: Session = Depends(get_db)):
+def list_databases(request: Request, category: str = None, type: str = None, db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
@@ -15,16 +15,21 @@ def list_databases(request: Request, category: str = None, db: Session = Depends
     manager = ConnectionManager(db)
     all_databases = manager.get_all_connections()
     
+    databases = all_databases
     if category and category != 'all':
-        databases = [d for d in all_databases if d.category == category]
-    else:
-        databases = all_databases
+        databases = [d for d in databases if d.category == category]
         
-    return templates.TemplateResponse("databases/list.html", {
+    if type and type != 'all':
+        databases = [d for d in databases if d.type == type]
+        
+    template = "databases/partials/content.html" if request.headers.get("hx-request") else "databases/list.html"
+        
+    return templates.TemplateResponse(template, {
         "request": request, 
         "user": user, 
         "databases": databases,
-        "current_category": category or 'all'
+        "current_category": category or 'all',
+        "current_type": type or 'all'
     })
 
 @router.get("/new", response_class=HTMLResponse)
