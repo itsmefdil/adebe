@@ -12,6 +12,7 @@ services:
       - redis-adebe
     volumes:
       - .:/app
+      - ./backups:/app/app/data/backups
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8008 --reload
 
   worker:
@@ -25,6 +26,7 @@ services:
       - redis-adebe
     volumes:
       - .:/app
+      - ./backups:/app/app/data/backups
     command: uv run celery -A app.core.celery_app.celery_app worker -l info
 
   redis-adebe:

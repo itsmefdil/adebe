@@ -3,6 +3,7 @@ import shutil
 from abc import ABC, abstractmethod
 from typing import BinaryIO
 from ftplib import FTP
+from datetime import datetime
 import boto3
 from botocore.exceptions import NoCredentialsError
 from fastapi import UploadFile
@@ -47,7 +48,16 @@ class LocalStorageBackend(StorageBackend):
     def list_backups(self) -> list:
         if not os.path.exists(self.base_dir):
             return []
-        return sorted(os.listdir(self.base_dir), reverse=True)
+        files = []
+        for f in os.listdir(self.base_dir):
+            path = os.path.join(self.base_dir, f)
+            if os.path.isfile(path):
+                 files.append({
+                    "name": f,
+                    "size": os.path.getsize(path),
+                    "timestamp": datetime.fromtimestamp(os.path.getmtime(path)).isoformat()
+                })
+        return sorted(files, key=lambda x: x['name'], reverse=True)
 
     def delete(self, filename: str):
         path = os.path.join(self.base_dir, filename)
@@ -76,9 +86,15 @@ class S3StorageBackend(StorageBackend):
 
     def list_backups(self) -> list:
         response = self.s3.list_objects_v2(Bucket=self.bucket)
+        files = []
         if 'Contents' in response:
-            return sorted([obj['Key'] for obj in response['Contents']], reverse=True)
-        return []
+            for obj in response['Contents']:
+                files.append({
+                    "name": obj['Key'],
+                    "size": obj['Size'],
+                    "timestamp": obj['LastModified'].isoformat()
+                })
+        return sorted(files, key=lambda x: x['name'], reverse=True)
 
     def delete(self, filename: str):
         self.s3.delete_object(Bucket=self.bucket, Key=filename)
@@ -111,9 +127,14 @@ class FTPStorageBackend(StorageBackend):
 
     def list_backups(self) -> list:
         ftp = self._get_connection()
-        files = ftp.nlst()
+        # This is a basic implementation, improved listing would require MLSD
+        try:
+            files_list = ftp.nlst()
+            files = [{"name": f, "size": 0, "timestamp": None} for f in files_list] # Metadata limited in basic FTP
+        except:
+             files = []
         ftp.quit()
-        return sorted(files, reverse=True)
+        return sorted(files, key=lambda x: x['name'], reverse=True)
 
     def delete(self, filename: str):
         ftp = self._get_connection()

@@ -64,7 +64,21 @@ A powerful, async-enabled database management interface supporting MySQL, Postgr
     python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     ```
 
-## Running the Application
+## Running with Docker
+
+You can easily run the application using Docker Compose.
+
+1.  **Configure Environment**:
+    Make sure you have created the `.env` file as described in the Installation section.
+
+2.  **Build and Run**:
+    ```bash
+    docker compose up --build
+    ```
+
+    The application will be accessible at `http://localhost:8008`.
+
+## Running Locally
 
 You need to run both the web server and the Celery worker.
 

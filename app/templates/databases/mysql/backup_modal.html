@@ -288,6 +288,21 @@
         if (pollInterval) clearInterval(pollInterval);
     }
 
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+    function formatDate(isoString) {
+        if (!isoString) return '';
+        const date = new Date(isoString);
+        return date.toLocaleString();
+    }
+
     async function refreshBackups() {
         const listBody = document.getElementById('backupList');
         const selectAll = document.getElementById('selectAllCheckbox');
@@ -302,17 +317,25 @@
                 listBody.innerHTML = data.files.map(file => `
                     <tr class="hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors group">
                         <td class="px-4 py-3">
-                            <input type="checkbox" name="backupSelect" value="${file}" onchange="checkSelection()" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                            <input type="checkbox" name="backupSelect" value="${file.name}" onchange="checkSelection()" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500">
                         </td>
-                        <td class="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-400 break-all">${file}</td>
+                        <td class="px-4 py-3 font-mono text-xs text-slate-600 dark:text-slate-400 break-all">
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">${file.name}</span>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[10px] text-slate-500">${formatBytes(file.size)}</span>
+                                    ${file.timestamp ? `<span class="text-[10px] text-slate-400">• ${formatDate(file.timestamp)}</span>` : ''}
+                                </div>
+                            </div>
+                        </td>
                         <td class="px-4 py-3 text-right flex items-center justify-end gap-2">
-                             <button onclick="deleteBackup('${file}')" class="text-xs p-1 text-slate-400 hover:text-red-600 transition-colors" title="Delete">
+                             <button onclick="deleteBackup('${file.name}')" class="text-xs p-1 text-slate-400 hover:text-red-600 transition-colors" title="Delete">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                             </button>
-                             <a href="/backups/database/${dbId}/backups/download/${file}" target="_blank" class="text-xs p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Download">
+                             <a href="/backups/database/${dbId}/backups/download/${file.name}" target="_blank" class="text-xs p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Download">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                             </a>
-                            <button onclick="triggerRestore('${file}')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
+                            <button onclick="triggerRestore('${file.name}')" class="text-xs font-medium text-emerald-600 hover:text-emerald-700 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 rounded border border-emerald-200 transition-colors">
                                 Restore
                             </button>
                         </td>
