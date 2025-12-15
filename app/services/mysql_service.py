@@ -41,6 +41,11 @@ class MySQLService:
     def get_processlist(self):
         return self.connector.execute_query("SHOW PROCESSLIST")
 
+    def get_all_databases(self):
+        result = self.connector.execute_query("SHOW DATABASES")
+        # result is like [{'Database': 'information_schema'}, {'Database': 'mysql'}, ...]
+        return [item['Database'] for item in result] if result else []
+
     def browse_table(self, table_name: str, page: int, limit: int, search: str = None, sort_by: str = None, sort_order: str = "ASC"):
         # Get column names first
         columns_info = self.connector.execute_query(f"SHOW COLUMNS FROM `{table_name}`")

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}MySQL Dashboard - Database Manager{% endblock %}
+{% block title %}{{ database.database_name }} - MySQL Dashboard{% endblock %}
 
 {% block content %}
 {% include "components/sidebar.html" %}
@@ -15,7 +15,15 @@
                         d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
             </a>
-            <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">{{ database.name }} - MySQL</h2>
+            <div class="flex flex-col">
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-200">{{ database.name }}</h2>
+                <div class="flex items-center gap-2 text-sm text-slate-500">
+                    <span class="font-mono text-primary bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">{{
+                        database.database_name }}</span>
+                    <span>•</span>
+                    <span>MySQL</span>
+                </div>
+            </div>
         </div>
         <div class="flex items-center gap-3">
             <button onclick="openBackupModal()"
@@ -37,6 +45,16 @@
                 Query Playground
             </button>
             <span class="text-sm text-slate-500">{{ variables.get('version', 'Unknown') }}</span>
+            {% if database.username|lower in ['root', 'admin'] %}
+            <a href="/databases/{{ database.id }}/mysql"
+                class="px-3 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-dark-hover border border-slate-200 dark:border-dark-border rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                    </path>
+                </svg>
+                Switch DB
+            </a>
+            {% endif %}
         </div>
     </header>
 

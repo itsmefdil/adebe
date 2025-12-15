@@ -55,7 +55,7 @@ class BatchDeleteColumnsRequest(BaseModel):
     column_names: List[str]
 
 @router.get("/{db_id}/mysql", response_class=HTMLResponse)
-def mysql_dashboard(request: Request, db_id: int, db: Session = Depends(get_db)):
+def mysql_dashboard(request: Request, db_id: int, view: str = Query(None), db: Session = Depends(get_db)):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login")
@@ -67,6 +67,18 @@ def mysql_dashboard(request: Request, db_id: int, db: Session = Depends(get_db))
         return RedirectResponse(url="/databases")
     
     service = MySQLService(database)
+    
+    # Check if user is root/admin and should see all databases
+    # Only show list if they didn't explicitly ask for the dashboard view
+    if database.username.lower() in ['root', 'admin'] and view != 'dashboard':
+        databases_list = service.get_all_databases()
+        return templates.TemplateResponse("databases/mysql/root_dashboard.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "databases_list": databases_list
+        })
+        
     stats = service.get_dashboard_stats()
     
     return templates.TemplateResponse("databases/mysql/dashboard.html", {

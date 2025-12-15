@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Server Overview - {{ database.name }}{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <!-- Header -->
+    <header
+        class="h-16 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-md border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 sticky top-0 z-10 transition-colors">
+        <div class="flex items-center gap-4">
+            <div
+                class="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                    </path>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-xl font-bold text-slate-800 dark:text-slate-100">{{ database.name }}</h2>
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="text-slate-500 dark:text-slate-400 font-medium tracking-wide uppercase">Root
+                        Access</span>
+                    <span
+                        class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-700/50">ADMIN</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="openQueryModal()"
+                class="group relative inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white transition-all duration-200 bg-slate-900 dark:bg-white dark:text-slate-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 hover:bg-slate-700 dark:hover:bg-slate-200">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+                Console
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8 space-y-8">
+
+        <!-- Search and Filter -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 dark:text-white">Databases</h1>
+                <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">Select a database to manage</p>
+            </div>
+            <div class="relative w-full md:w-96 group">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <input type="text" id="dbSearch"
+                    class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 dark:border-dark-border rounded-xl leading-5 bg-white dark:bg-dark-surface text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary sm:text-sm transition-all shadow-sm"
+                    placeholder="Search databases..." onkeyup="filterDatabases()">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="databaseGrid">
+            {% for db_name in databases_list %}
+            {% set is_system = db_name in ['information_schema', 'mysql', 'performance_schema', 'sys'] %}
+            <div class="database-card group relative bg-white dark:bg-dark-surface rounded-xl border border-slate-200 dark:border-dark-border hover:border-primary/50 dark:hover:border-primary/50 shadow-sm hover:shadow-md hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
+                data-name="{{ db_name }}">
+
+                <div class="p-6">
+                    <div class="flex items-start justify-between mb-4">
+                        <div
+                            class="w-12 h-12 rounded-xl {{ 'bg-slate-100 text-slate-500 dark:bg-dark-hover dark:text-slate-400' if is_system else 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' }} flex items-center justify-center transition-transform group-hover:scale-110 duration-300">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4">
+                                </path>
+                            </svg>
+                        </div>
+                        {% if is_system %}
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded bg-slate-100 dark:bg-dark-hover text-xs font-medium text-slate-500 dark:text-slate-400">System</span>
+                        {% endif %}
+                    </div>
+
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 mb-1 group-hover:text-primary transition-colors truncate"
+                        title="{{ db_name }}">{{ db_name }}</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Database</p>
+                </div>
+
+                <div
+                    class="px-6 py-4 bg-slate-50 dark:bg-dark-hover/50 border-t border-slate-100 dark:border-dark-border flex items-center justify-between">
+                    <span class="text-xs text-slate-400 font-mono">UTF-8</span>
+                    <button onclick="switchDatabase('{{ db_name }}')"
+                        class="text-sm font-medium text-primary hover:text-blue-700 flex items-center gap-1 group/btn">
+                        Manage
+                        <svg class="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Empty State -->
+        {% if not databases_list %}
+        <div class="flex flex-col items-center justify-center py-20">
+            <div class="w-16 h-16 bg-slate-100 dark:bg-dark-surface rounded-full flex items-center justify-center mb-4">
+                <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
+                    </path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100">No databases found</h3>
+        </div>
+        {% endif %}
+    </div>
+</main>
+
+{% include "databases/mysql/query_modal.html" %}
+
+<script>
+    function filterDatabases() {
+        const input = document.getElementById('dbSearch');
+        const filter = input.value.toLowerCase();
+        const cards = document.getElementsByClassName('database-card');
+
+        for (let i = 0; i < cards.length; i++) {
+            const name = cards[i].getAttribute('data-name').toLowerCase();
+            if (name.indexOf(filter) > -1) {
+                cards[i].style.display = "";
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
+    }
+
+    async function switchDatabase(dbName) {
+        try {
+            const response = await fetch(`/databases/{{ database.id }}/switch-db`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ database_name: dbName })
+            });
+
+            if (response.ok) {
+                // Redirect to dashboard view
+                window.location.href = `/databases/{{ database.id }}/mysql?view=dashboard`;
+            } else {
+                const data = await response.json();
+                alert("Failed to switch database: " + (data.error || "Unknown error"));
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+</script>
+{% endblock %}
