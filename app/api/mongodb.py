@@ -376,3 +376,225 @@ async def mongodb_run_command(request: Request, db_id: int, db: Session = Depend
         return {"success": True, "result": result}
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+@router.get("/{db_id}/mongodb/users", response_class=HTMLResponse)
+async def mongodb_users_list(request: Request, db_id: int, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return RedirectResponse(url="/databases")
+        
+    try:
+        service = MongoService(database)
+        users, is_partial = service.get_users()
+        
+        return templates.TemplateResponse("databases/mongodb/users.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "users": users,
+            "is_partial": is_partial
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.get("/{db_id}/mongodb/users/create", response_class=HTMLResponse)
+async def mongodb_create_user_page(request: Request, db_id: int, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return RedirectResponse(url="/databases")
+        
+    return templates.TemplateResponse("databases/mongodb/create_user.html", {
+        "request": request,
+        "user": user,
+        "database": database
+    })
+
+def parse_roles(roles_str):
+    if not roles_str:
+        return []
+    
+    roles = []
+    # Split by comma
+    parts = [p.strip() for p in roles_str.split(",") if p.strip()]
+    
+    for part in parts:
+        if "@" in part:
+            r_name, r_db = part.split("@", 1)
+            roles.append({"role": r_name.strip(), "db": r_db.strip()})
+        else:
+            roles.append(part)
+    return roles
+
+@router.post("/{db_id}/mongodb/users/create")
+async def mongodb_create_user(request: Request, db_id: int, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return RedirectResponse(url="/databases")
+        
+    try:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
+        roles_str = form.get("roles") # Expecting comma-separated string
+        auth_db = form.get("auth_db") or database.database_name # Default to current DB
+        
+        if not username or not password:
+             return templates.TemplateResponse("databases/mongodb/create_user.html", {
+                "request": request,
+                "user": user,
+                "database": database,
+                "error": "Username and Password are required"
+            })
+            
+        roles = parse_roles(roles_str)
+        
+        service = MongoService(database)
+        service.create_user(username, password, roles, auth_db)
+        
+        # If created in another DB, we might want to redirect there?
+        # For now, stay here. Users created elsewhere won't appear in list unless we change query.
+        return RedirectResponse(
+            url=f"/databases/{db_id}/mongodb/users", 
+            status_code=303
+        )
+    except Exception as e:
+        return templates.TemplateResponse("databases/mongodb/create_user.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "error": str(e)
+        })
+
+@router.delete("/{db_id}/mongodb/users/{username}")
+async def mongodb_delete_user(request: Request, db_id: int, username: str, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return {"error": "Invalid database type"}
+        
+    try:
+        # Check if auth_db is provided in query params (optional future enhancement)
+        # For now, delete from current DB context implies standard deletion
+        service = MongoService(database)
+        service.delete_user(username)
+        return {"success": True}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@router.get("/{db_id}/mongodb/users/{username}/edit", response_class=HTMLResponse)
+async def mongodb_edit_user_page(request: Request, db_id: int, username: str, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return RedirectResponse(url="/databases")
+    
+    try:
+        service = MongoService(database)
+        users, _ = service.get_users()
+        target_user = next((u for u in users if u["user"] == username), None)
+        
+        if not target_user:
+            return HTMLResponse("User not found")
+            
+        # Transform roles to comma-separated string for simpler editing
+        if "roles" in target_user:
+            role_names = []
+            for role in target_user["roles"]:
+                if isinstance(role, dict):
+                    # Format as role@db
+                    role_names.append(f"{role.get('role')}@{role.get('db')}")
+                else:
+                    role_names.append(str(role))
+            target_user["roles_str"] = ", ".join(role_names)
+        else:
+             target_user["roles_str"] = ""
+
+        return templates.TemplateResponse("databases/mongodb/edit_user.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "target_user": target_user
+        })
+    except Exception as e:
+        return HTMLResponse(f"Error: {str(e)}")
+
+@router.post("/{db_id}/mongodb/users/{username}/edit")
+async def mongodb_update_user(request: Request, db_id: int, username: str, db: Session = Depends(get_db)):
+    user = get_current_user(request)
+    if not user:
+        return RedirectResponse(url="/login")
+    
+    manager = ConnectionManager(db)
+    database = manager.get_connection(db_id)
+    
+    if not database or database.type != "MongoDB":
+        return RedirectResponse(url="/databases")
+        
+    try:
+        form = await request.form()
+        password = form.get("password")
+        roles_str = form.get("roles")
+        
+        roles = None
+        if roles_str is not None:
+             roles = parse_roles(roles_str)
+        
+        service = MongoService(database)
+        service.update_user(username, password if password else None, roles)
+        
+        return RedirectResponse(
+            url=f"/databases/{db_id}/mongodb/users", 
+            status_code=303
+        )
+    except Exception as e:
+        # Fetch user again to re-render form with error
+        try:
+             service = MongoService(database)
+             users, _ = service.get_users()
+             target_user = next((u for u in users if u["user"] == username), {})
+             if "roles" in target_user:
+                role_names = []
+                for role in target_user["roles"]:
+                    if isinstance(role, dict):
+                        role_names.append(f"{role.get('role')}@{role.get('db')}")
+                    else:
+                        role_names.append(str(role))
+                target_user["roles_str"] = ", ".join(role_names)
+        except:
+            target_user = {"user": username, "roles_str": ""}
+            
+        return templates.TemplateResponse("databases/mongodb/edit_user.html", {
+            "request": request,
+            "user": user,
+            "database": database,
+            "target_user": target_user,
+            "error": str(e)
+        })

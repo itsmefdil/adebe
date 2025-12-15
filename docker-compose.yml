@@ -2,7 +2,7 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "8008:8008"
     env_file:
       - .env
     environment:
@@ -12,7 +12,7 @@ services:
       - redis-adebe
     volumes:
       - .:/app
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8008 --reload
 
   worker:
     build: .

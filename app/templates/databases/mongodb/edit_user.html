@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Edit MongoDB User{% endblock %}
+
+{% block content %}
+{% include "components/sidebar.html" %}
+
+<main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-dark-bg transition-colors duration-200">
+    <header
+        class="h-16 bg-white dark:bg-dark-surface border-b border-slate-200 dark:border-dark-border flex items-center justify-between px-8 transition-colors">
+        <div class="flex items-center gap-4">
+            <a href="/databases/{{ database.id }}/mongodb/users" class="text-slate-400 hover:text-slate-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+            </a>
+            <div class="flex items-center gap-2">
+                <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-200">Edit User</h2>
+                <span class="text-slate-300 dark:text-slate-600">/</span>
+                <span class="text-primary font-bold text-xl">{{ target_user.user }}</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-2xl mx-auto">
+            {% if error %}
+            <div
+                class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-lg mb-6 flex items-center gap-3">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <form action="/databases/{{ database.id }}/mongodb/users/{{ target_user.user }}/edit" method="POST"
+                class="bg-white dark:bg-dark-surface rounded-xl shadow-sm border border-slate-200 dark:border-dark-border p-6 space-y-6 transition-colors">
+
+                <div class="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-lg text-sm">
+                    <strong>Note:</strong> Username cannot be changed. To rename a user, recreate them.
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New
+                        Password</label>
+                    <input type="password" name="password" id="password"
+                        class="w-full px-4 py-2 bg-white dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder-slate-400"
+                        placeholder="Leave blank to keep current password">
+                </div>
+
+                <div>
+                    <label for="roles" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                        Roles <span class="text-slate-400 font-normal">(Comma Separated)</span>
+                    </label>
+                    <div class="relative">
+                        <textarea name="roles" id="roles" rows="3"
+                            class="w-full px-4 py-2 bg-white dark:bg-dark-bg border border-slate-200 dark:border-dark-border rounded-lg text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all font-mono text-sm placeholder-slate-400"
+                            placeholder="readWrite, dbAdmin@admin">{{ target_user.roles_str }}</textarea>
+                    </div>
+                    <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        Use <code>role@db</code> to specify role database.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-dark-border">
+                    <a href="/databases/{{ database.id }}/mongodb/users"
+                        class="px-4 py-2 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">Cancel</a>
+                    <button type="submit"
+                        class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-blue-600 transition-colors">
+                        Update User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{% endblock %}

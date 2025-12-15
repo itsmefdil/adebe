@@ -244,3 +244,42 @@ class MongoService:
     def run_command(self, command: dict):
         result = self.db.command(command)
         return self._serialize_doc(result)
+
+    def get_users(self):
+        try:
+            # First try to get all users from all databases (requires admin)
+            # Use admin database for the command
+            result = self.connector.client.admin.command({"usersInfo": 1, "forAllDBs": True})
+            return result.get("users", []), False
+        except Exception as e:
+            print(f"Error fetching all users (falling back to current db): {e}")
+            # Fallback to users of the current database only
+            try:
+                result = self.db.command("usersInfo")
+                return result.get("users", []), True
+            except Exception as e:
+                print(f"Error fetching users: {e}")
+                return [], True
+
+    def create_user(self, username, password, roles, auth_db=None):
+        target_db = self.connector.client[auth_db] if auth_db else self.db
+        command = {
+            "createUser": username,
+            "pwd": password,
+            "roles": roles
+        }
+        return target_db.command(command)
+
+    def update_user(self, username, password=None, roles=None, auth_db=None):
+        target_db = self.connector.client[auth_db] if auth_db else self.db
+        command = {"updateUser": username}
+        if password:
+            command["pwd"] = password
+        if roles is not None:
+            command["roles"] = roles
+            
+        return target_db.command(command)
+
+    def delete_user(self, username, auth_db=None):
+        target_db = self.connector.client[auth_db] if auth_db else self.db
+        return target_db.command("dropUser", username)

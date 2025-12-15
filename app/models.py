@@ -30,7 +30,7 @@ class ActivityLog(Base):
     icon_type = Column(String, default="info")  # "info", "warning", "success", "error"
 
 # SQLite database for storing application data (connections, settings, etc.)
-SQLALCHEMY_DATABASE_URL = "sqlite:///app.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///database/app.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, 
