@@ -14,3 +14,4 @@ app/data/app.db.env
 app/data/app.db
 app.db
 app/data/backups
+database
