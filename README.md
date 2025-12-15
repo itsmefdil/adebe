@@ -50,6 +50,20 @@ A powerful, async-enabled database management interface supporting MySQL, Postgr
     STORAGE_TYPE=LOCAL
     ```
 
+    ### Key Generation
+
+    You can generate secure keys using the following commands:
+
+    **Generate SECRET_KEY:**
+    ```bash
+    python -c "import secrets; print(secrets.token_urlsafe(32))"
+    ```
+
+    **Generate ENCRYPTION_KEY:**
+    ```bash
+    python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    ```
+
 ## Running the Application
 
 You need to run both the web server and the Celery worker.

@@ -26,7 +26,8 @@ def backup_database(self, db_id: int):
         service = BackupService(database)
         
         # Run async backup method
-        filename = params_to_sync(service.backup)(backup_filename)
+
+        filename = params_to_sync(service.backup)()
         
         return {"status": "success", "filename": filename}
         
