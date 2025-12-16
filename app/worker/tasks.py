@@ -25,9 +25,26 @@ def backup_database(self, db_id: int):
         
         service = BackupService(database)
         
-        # Run async backup method
+        def progress_observer(status, meta=None):
+            if meta is None: meta = {}
+            
+            # Log progress to terminal
+            log_message = f"[{self.request.id}] Database {db_id} Backup Progress: {status}"
+            if 'file_size' in meta:
+                size_mb = meta['file_size'] / (1024 * 1024)
+                log_message += f" - Size: {size_mb:.2f} MB"
+            elif meta:
+                 log_message += f" - Meta: {meta}"
+            
+            print(log_message, flush=True)
 
-        filename = params_to_sync(service.backup)()
+            self.update_state(state='PROGRESS', meta={
+                'status': status,
+                **meta
+            })
+
+        # Run async backup method
+        filename = params_to_sync(service.backup)(progress_callback=progress_observer)
         
         return {"status": "success", "filename": filename}
         

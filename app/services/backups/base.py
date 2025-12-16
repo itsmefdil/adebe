@@ -12,7 +12,7 @@ class BackupHandler(ABC):
         pass
 
     @abstractmethod
-    async def backup(self, file_path: str):
+    async def backup(self, file_path: str, progress_callback=None):
         """Perform backup to the given file path"""
         pass
 

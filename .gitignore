@@ -15,4 +15,4 @@ app/data/app.db
 app.db
 app/data/backups
 database
-backups
+/backups

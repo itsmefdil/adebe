@@ -17,7 +17,7 @@ class BackupService:
             "password": decrypt_password(database.password)
         }
 
-    async def backup(self) -> str:
+    async def backup(self, progress_callback=None) -> str:
         """
         Performs a backup of the database and uploads it to storage.
         Returns the filename of the backup.
@@ -26,16 +26,27 @@ class BackupService:
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         # Ensure we use the handler's extension
-        filename = f"{self.database.type.lower()}_{self.database.name}_{timestamp}{handler.file_extension}"
+        db_name = self.database.database_name or "all_databases"
+        filename = f"{self.database.type.lower()}_{db_name}_{timestamp}{handler.file_extension}"
         
         with tempfile.NamedTemporaryFile(delete=False) as tmp_file:
             temp_path = tmp_file.name
 
         try:
-            await handler.backup(temp_path)
+            if progress_callback:
+                progress_callback("Starting Backup", {"step": "init"})
+
+            await handler.backup(temp_path, progress_callback)
+
+            if progress_callback:
+                progress_callback("Uploading to Storage", {"step": "upload"})
 
             # Upload to storage
             uploaded_filename = self.storage.upload(temp_path, filename)
+            
+            if progress_callback:
+                progress_callback("Completed", {"step": "done", "filename": uploaded_filename})
+                
             return uploaded_filename
         finally:
             if os.path.exists(temp_path):
